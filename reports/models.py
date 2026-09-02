@@ -3,13 +3,52 @@
 import uuid
 import hashlib
 import secrets
-
+from django.utils.text import slugify
 from django.contrib.gis.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import Q
 
 
 
+
+
+class Category(models.Model):
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    slug = models.SlugField(
+        max_length=120,
+        unique=True,
+        blank=True,
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        db_index=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "Categories"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 
 class Report(models.Model):
     class ReportType(models.TextChoices):
@@ -186,3 +225,64 @@ class ReportManagementToken(models.Model):
     @staticmethod
     def hash_token(token):
         return hashlib.sha256(token.encode()).hexdigest()
+
+
+class ReportFlag(models.Model):
+    class Reason(models.TextChoices):
+        SPAM = "spam", "Spam"
+        SCAM = "scam", "Scam"
+        FAKE = "fake", "Fake report"
+        INAPPROPRIATE = "inappropriate", "Inappropriate content"
+        WRONG_INFORMATION = "wrong_information", "Wrong information"
+        OTHER = "other", "Other"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        REVIEWED = "reviewed", "Reviewed"
+        ACTIONED = "actioned", "Actioned"
+
+    id = models.BigAutoField(
+        primary_key=True,
+    )
+
+    report = models.ForeignKey(
+        "Report",
+        on_delete=models.CASCADE,
+        related_name="flags",
+    )
+
+    reason = models.CharField(
+        max_length=30,
+        choices=Reason.choices,
+    )
+
+    description = models.TextField(
+        max_length=1000,
+        blank=True,
+    )
+
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["report", "status"]),
+            models.Index(fields=["status", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"Flag on {self.report.title} - {self.reason}"

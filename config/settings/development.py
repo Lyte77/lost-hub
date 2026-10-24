@@ -1,6 +1,6 @@
 from .base import *
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "True").lower() in {"true", "1", "yes", "on"}
 
 ALLOWED_HOSTS = [
     "localhost",

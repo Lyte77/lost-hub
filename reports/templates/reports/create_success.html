@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Report published</h1>
+
+<p>
+    Your report for
+    <strong>{{ report.title }}</strong>
+    has been published.
+</p>
+
+
+{% if management_url %}
+
+    <div>
+        <h2>Save your private management link</h2>
+
+        <p>
+            You will need this link to edit, resolve,
+            or remove your report.
+        </p>
+
+        <input
+            type="text"
+            value="{{ management_url }}"
+            readonly
+        >
+    </div>
+
+{% else %}
+
+    <p>
+        This report was already created.
+        Use the management link you previously saved.
+    </p>
+
+{% endif %}
+
+{% endblock %}

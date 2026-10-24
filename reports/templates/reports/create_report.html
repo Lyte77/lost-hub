@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@2.0.0-alpha.1/dist/leaflet.css" integrity="sha256-P+hWJNlpL+GBSRYC7cdsDbQH91URmpDeOzLp7DbFRtE=" crossorigin="anonymous" />
+<h1>
+    {% if report_type == "lost" %}
+        Report a lost item
+    {% elif report_type == "found" %}
+        Report a found item
+    {% else %}
+        Create report
+    {% endif %}
+</h1>
+
+
+<form
+    method="post"
+    enctype="multipart/form-data"
+    id="report-form"
+>
+    {% csrf_token %}
+
+    {{ form.non_field_errors }}
+
+    {{ form.type }}
+
+    {% if form.errors %}
+    <div>
+        {{ form.errors }}
+    </div>
+{% endif %}
+
+    <div>
+        {{ form.title.label_tag }}
+        {{ form.title }}
+        {{ form.title.errors }}
+    </div>
+
+    <div>
+        {{ form.category.label_tag }}
+        {{ form.category }}
+        {{ form.category.errors }}
+    </div>
+
+    <div>
+        {{ form.description.label_tag }}
+        {{ form.description }}
+        {{ form.description.errors }}
+    </div>
+
+    <div>
+        {{ form.occurred_at.label_tag }}
+        {{ form.occurred_at }}
+        {{ form.occurred_at.errors }}
+    </div>
+
+
+    <div>
+        <label for="report-images">
+            Photos
+        </label>
+
+        <input
+            type="file"
+            id="report-images"
+            name="images"
+            accept="image/*"
+            multiple
+        >
+    </div>
+
+
+    <section>
+        <h2>Where did this happen?</h2>
+<button
+    type="button"
+    id="use-current-location"
+    data-reverse-geocode-url="{% url 'reports:reverse_geocode' %}"
+>
+    Use my current location
+</button>
+
+        <p id="location-status">
+            No location selected.
+        </p>
+<button
+    type="button"
+    id="choose-location-map"
+>
+    Choose / adjust on map
+</button>
+
+<div
+    id="map-wrapper"
+    class="hidden"
+>
+    <div
+        id="location-map"
+        data-maptiler-key="{{ maptiler_api_key }}"
+        style="height: 400px; width: 100%;"
+    ></div>
+
+    <p>
+        Click the map or drag the marker to select the location.
+    </p>
+</div>
+
+        {{ form.latitude }}
+        {{ form.longitude }}
+        {{ form.location_accuracy }}
+        {{ form.location_name }}
+        {{ form.location_source }}
+
+        {{ form.latitude.errors }}
+        {{ form.longitude.errors }}
+    </section>
+
+
+    <div>
+        {{ form.phone_number.label_tag }}
+        {{ form.phone_number }}
+        {{ form.phone_number.errors }}
+    </div>
+
+
+    <button type="submit">
+        Publish report
+    </button>
+
+    <small>
+    Location data © OpenStreetMap contributors
+</small>
+</form>
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+></script>  
+
+
+<script src="{% static 'js/location.js' %}"></script>
+
+{% endblock %}

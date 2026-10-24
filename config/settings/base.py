@@ -14,20 +14,19 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
-load_dotenv()  # Load environment variables from .env file
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-jxc(%l@h=4ix-@p!!sa5$l$3cdnwzxi@lvp$6b#(yg)p^-6d86'
+SECRET_KEY = os.getenv("SECRET_KEY", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False").lower() in {"true", "1", "yes", "on"}
 
 ALLOWED_HOSTS = []
 
@@ -62,7 +61,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -131,7 +130,8 @@ USE_I18N = True
 USE_TZ = True
 
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "media/"
@@ -150,3 +150,10 @@ MAILERS = {
 GDAL_LIBRARY_PATH = os.environ.get("GDAL_LIBRARY_PATH")
 GDAL_DATA = os.environ.get("GDAL_DATA")
 PROJ_LIB = os.environ.get("PROJ_LIB")
+GEOS_LIBRARY_PATH = os.environ.get("GEOS_LIBRARY_PATH")
+
+GEOCODING_USER_AGENT = os.environ["GEOCODING_USER_AGENT"]
+
+MAPTILER_API_KEY = os.environ["MAPTILER_API_KEY"]
+
+GEOCODING_BASE_URL = "https://nominatim.openstreetmap.org"

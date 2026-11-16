@@ -1,0 +1,114 @@
+<div id="report-results">
+
+    {% for report in page_obj %}
+
+        <article>
+
+            {% with image=report.images.first %}
+                {% if image %}
+                    <img
+                        src="{{ image.image.url }}"
+                        alt="{{ report.title }}"
+                    >
+                {% endif %}
+            {% endwith %}
+
+            <span>
+                {{ report.get_type_display }}
+            </span>
+
+            <h2>
+                <a href="{% url 'reports:detail' report.id %}">
+                    {{ report.title }}
+                </a>
+            </h2>
+
+            <p>
+                {{ report.category.name }}
+            </p>
+
+            {% if report.location_name %}
+                <p>
+                    📍 {{ report.location_name }}
+                </p>
+            {% endif %}
+
+            {% if report.distance %}
+                <p>
+                    📍 {{ report.distance.km|floatformat:1 }} km away
+                </p>
+            
+            {% endif %}
+
+            <p>
+                {{ report.occurred_at|date:"j M Y, g:i A" }}
+            </p>
+
+        </article>
+
+    {% empty %}
+
+    <div>
+        {% if search_query %}
+
+            <h3>No reports found</h3>
+
+            <p>
+                We couldn't find anything matching
+                "{{ search_query }}".
+            </p>
+
+        {% else %}
+
+            <h3>No reports yet</h3>
+
+            <p>
+                No reports match these filters.
+            </p>
+
+        {% endif %}
+    </div>
+
+{% endfor %}
+
+
+    {% if page_obj.has_other_pages %}
+
+        <nav>
+
+           {% if page_obj.has_previous %}
+
+    <button
+        hx-get="?page={{ page_obj.previous_page_number }}&q={{ search_query|urlencode }}&type={{ selected_type|default:'' }}&category={{ selected_category|default:'' }}"
+        hx-target="#report-results"
+        hx-swap="outerHTML"
+    >
+        Previous
+    </button>
+
+{% endif %}
+
+
+            <span>
+                Page {{ page_obj.number }}
+                of {{ page_obj.paginator.num_pages }}
+            </span>
+
+
+            {% if page_obj.has_next %}
+
+            <button
+                hx-get="?page={{ page_obj.next_page_number }}&q={{ search_query|urlencode }}&type={{ selected_type|default:'' }}&category={{ selected_category|default:'' }}"
+                hx-target="#report-results"
+                hx-swap="outerHTML"
+            >
+                Next
+            </button>
+
+            {% endif %}
+
+        </nav>
+
+    {% endif %}
+
+</div>

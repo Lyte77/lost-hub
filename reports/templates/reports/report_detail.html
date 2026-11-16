@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<article>
+
+    <a href="{% url 'reports:list' %}">
+        ← Back to reports
+    </a>
+
+
+    <header>
+
+        <span>
+            {{ report.get_type_display }}
+        </span>
+
+        <h1>
+            {{ report.title }}
+        </h1>
+
+        <p>
+            {{ report.category.name }}
+        </p>
+
+    </header>
+
+
+    {% if report.images.all %}
+
+        <div>
+            {% for image in report.images.all %}
+
+                <img
+                    src="{{ image.image.url }}"
+                    alt="{{ report.title }}"
+                >
+
+            {% endfor %}
+        </div>
+
+    {% endif %}
+
+
+    <section>
+
+        <h2>
+            Description
+        </h2>
+
+        <p>
+            {{ report.description }}
+        </p>
+
+    </section>
+
+
+    <section>
+
+        <h2>
+            Location
+        </h2>
+
+        <p>
+            📍 {{ report.location_name }}
+        </p>
+
+    </section>
+
+
+    <section>
+
+        <h2>
+            Date / Time
+        </h2>
+
+        <p>
+            {{ report.occurred_at|date:"j M Y, g:i A" }}
+        </p>
+
+    </section>
+
+
+    <section>
+
+        <h2>
+            Contact
+        </h2>
+
+        <div id="report-contact">
+
+    <button
+        type="button"
+        hx-get="{% url 'reports:contact' report.id %}"
+        hx-target="#report-contact"
+        hx-swap="outerHTML"
+    >
+        Contact Reporter
+    </button>
+
+</div>
+
+    </section>
+
+</article>
+
+{% endblock %}

@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    
-  
+
+
 
     const currentLocationButton =
         document.getElementById("use-current-location");
@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const locationSourceInput =
         document.getElementById("id_location_source");
 
-   
+
 
 
     let map = null;
@@ -277,7 +277,7 @@ function initialiseMap(
             source: "map",
         });
     });
-}   
+}
 
 function showFallbackMap() {
     locationStatus.textContent =
@@ -473,8 +473,16 @@ function showFallbackMap() {
         const data =
             await response.json();
 
+         console.log("GEOCODING DATA:", data);
 
+    locationNameInput.value = data.location_name;
+
+    console.log(
+        "LOCATION INPUT VALUE:",
+        locationNameInput.value
+    );
         return data.location_name;
+
     }
 });
 

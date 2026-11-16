@@ -5,8 +5,7 @@ from .models import Report
 
 
 class ReportCreateForm(forms.ModelForm):
-    # These are NOT model fields.
-    # JavaScript will populate them automatically.
+
     latitude = forms.FloatField(
         widget=forms.HiddenInput()
     )
@@ -97,3 +96,39 @@ class ReportCreateForm(forms.ModelForm):
             )
 
         return cleaned_data
+
+class ReportUpdateForm(ReportCreateForm):
+
+    class Meta(ReportCreateForm.Meta):
+        fields = [
+            "title",
+            "category",
+            "description",
+            "occurred_at",
+            "phone_number",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk and self.instance.location:
+            self.initial.setdefault(
+                "latitude",
+                self.instance.location.y,
+            )
+            self.initial.setdefault(
+                "longitude",
+                self.instance.location.x,
+            )
+            self.initial.setdefault(
+                "location_name",
+                self.instance.location_name,
+            )
+            self.initial.setdefault(
+                "location_accuracy",
+                self.instance.location_accuracy,
+            )
+            self.initial.setdefault(
+                "location_source",
+                self.instance.location_source,
+            )

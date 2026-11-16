@@ -1,0 +1,37 @@
+
+<section>
+    <h2>Where did this happen?</h2>
+
+    <button
+        type="button"
+        id="use-current-location"
+        data-reverse-geocode-url="{% url 'reports:reverse_geocode' %}"
+    >
+        Use my current location
+    </button>
+
+    <p id="location-status">
+        {{ initial_location_status|default:"No location selected." }}
+    </p>
+
+    <button
+        type="button"
+        id="choose-location-map"
+    >
+        Choose / adjust on map
+    </button>
+
+    <div id="map-wrapper" class="hidden">
+        <div
+            id="location-map"
+            data-maptiler-key="{{ maptiler_api_key }}"
+            data-initial-latitude="{{ initial_latitude|default:'' }}"
+            data-initial-longitude="{{ initial_longitude|default:'' }}"
+            style="height: 400px; width: 100%;"
+        ></div>
+
+        <p>
+            Click the map or drag the marker to select the location.
+        </p>
+    </div>
+</section>

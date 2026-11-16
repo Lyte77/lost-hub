@@ -69,51 +69,7 @@
         >
     </div>
 
-
-    <section>
-        <h2>Where did this happen?</h2>
-<button
-    type="button"
-    id="use-current-location"
-    data-reverse-geocode-url="{% url 'reports:reverse_geocode' %}"
->
-    Use my current location
-</button>
-
-        <p id="location-status">
-            No location selected.
-        </p>
-<button
-    type="button"
-    id="choose-location-map"
->
-    Choose / adjust on map
-</button>
-
-<div
-    id="map-wrapper"
-    class="hidden"
->
-    <div
-        id="location-map"
-        data-maptiler-key="{{ maptiler_api_key }}"
-        style="height: 400px; width: 100%;"
-    ></div>
-
-    <p>
-        Click the map or drag the marker to select the location.
-    </p>
-</div>
-
-        {{ form.latitude }}
-        {{ form.longitude }}
-        {{ form.location_accuracy }}
-        {{ form.location_name }}
-        {{ form.location_source }}
-
-        {{ form.latitude.errors }}
-        {{ form.longitude.errors }}
-    </section>
+{% include "reports/partials/_location_picker.html" %}
 
 
     <div>
@@ -136,7 +92,7 @@
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
-></script>  
+></script>
 
 
 <script src="{% static 'js/location.js' %}"></script>

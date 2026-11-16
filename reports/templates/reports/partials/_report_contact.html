@@ -1,0 +1,27 @@
+<div id="report-contact">
+
+    <p>
+        Contact the person who posted this report.
+    </p>
+
+    <p>
+        {{ report.phone_number }}
+    </p>
+
+    <div>
+
+        <a href="tel:{{ report.phone_number }}">
+            Call
+        </a>
+
+        <a
+            href="https://wa.me/{{ whatsapp_number }}"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            WhatsApp
+        </a>
+
+    </div>
+
+</div>

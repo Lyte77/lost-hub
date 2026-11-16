@@ -40,7 +40,7 @@ def reverse_geocode(*, latitude, longitude):
         )
 
     data = response.json()
-    print("GEOCODING RESPONSE:", data)
+
 
     location_name = _format_location_name(data)
 

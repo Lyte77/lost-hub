@@ -71,7 +71,11 @@
 
 {% include "reports/partials/_location_picker.html" %}
 
-
+{{ form.latitude }}
+{{ form.longitude }}
+{{ form.location_accuracy }}
+{{ form.location_name }}
+{{ form.location_source }}
     <div>
         {{ form.phone_number.label_tag }}
         {{ form.phone_number }}

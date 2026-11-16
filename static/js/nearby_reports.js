@@ -30,6 +30,18 @@ document.addEventListener("DOMContentLoaded", () => {
             "nearby-status"
         );
 
+      if (
+    !form ||
+    !nearMeButton ||
+    !clearButton ||
+    !latitudeInput ||
+    !longitudeInput ||
+    !nearbyInput ||
+    !status
+) {
+    return;
+}
+
 
     nearMeButton.addEventListener(
         "click",
@@ -135,4 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
     );
+
+
 });

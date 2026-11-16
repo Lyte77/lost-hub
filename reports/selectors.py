@@ -42,7 +42,7 @@ def get_public_reports(*,
             | Q(location_name__icontains=query)
         )
 
-    
+
     if latitude is not None and longitude is not None:
         user_location = Point(
             longitude,

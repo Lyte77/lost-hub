@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 py-10">
+
+    <h1 class="text-2xl font-bold mb-2">
+        Edit your report
+    </h1>
+
+    <p class="text-gray-500 mb-6">
+        Update the information about your
+        {{ report.get_type_display|lower }} item.
+    </p>
+
+    <form method="POST" class="space-y-5">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="text-red-600">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div>
+            <label class="font-medium">Item title</label>
+            {{ form.title }}
+            {{ form.title.errors }}
+        </div>
+
+        <div>
+            <label class="font-medium">Category</label>
+            {{ form.category }}
+            {{ form.category.errors }}
+        </div>
+
+        <div>
+            <label class="font-medium">Description</label>
+            {{ form.description }}
+            {{ form.description.errors }}
+        </div>
+
+        <div>
+            <label class="font-medium">When was it lost/found?</label>
+            {{ form.occurred_at }}
+            {{ form.occurred_at.errors }}
+        </div>
+
+        <div>
+            <label class="font-medium">Phone number</label>
+            {{ form.phone_number }}
+            {{ form.phone_number.errors }}
+        </div>
+
+       {% include "reports/partials/_location_picker.html" %}
+
+{{ form.latitude }}
+{{ form.longitude }}
+{{ form.location_accuracy }}
+Locattion: {{ form.location_name }}
+{{ form.location_source }}
+
+        <button
+            type="submit"
+            class="w-full rounded-lg bg-black px-5 py-3 text-white font-semibold"
+        >
+            Save changes
+        </button>
+
+        <a
+            href="{% url 'reports:manage' report.id token %}"
+            class="block text-center text-gray-500"
+        >
+            Cancel
+        </a>
+
+    </form>
+
+</div>
+{% endblock %}

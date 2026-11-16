@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    
-  
+
+
 
     const currentLocationButton =
         document.getElementById("use-current-location");
@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const locationSourceInput =
         document.getElementById("id_location_source");
 
-   
+
 
 
     let map = null;
@@ -277,7 +277,7 @@ function initialiseMap(
             source: "map",
         });
     });
-}   
+}
 
 function showFallbackMap() {
     locationStatus.textContent =
@@ -474,48 +474,11 @@ function showFallbackMap() {
             await response.json();
 
 
+
+    locationNameInput.value = data.location_name;
+
+
         return data.location_name;
+
     }
 });
-
-
-
-// document.addEventListener("DOMContentLoaded", () => {
-//     console.log("Leaflet available:", typeof L);
-
-//     const container = document.getElementById("location-map");
-
-//     console.log("Map container:", container);
-//     console.log("Height:", container.offsetHeight);
-//     console.log("Width:", container.offsetWidth);
-
-//     const map = L.map("location-map").setView(
-//         [9.0820, 8.6753],
-//         6
-//     );
-
-//     console.log("Map created:", map);
-
-//     const tiles =L.tileLayer(
-//     "https://api.maptiler.com/maps/streets-v4/256/{z}/{x}/{y}.png?key=BpK6rcnO1OH0I73mmPQi",
-//     {
-//         maxZoom: 19,
-//         attribution:
-//             '&copy; MapTiler &copy; OpenStreetMap contributors'
-//     }
-// ).addTo(map);
-
-//     tiles.on("loading", () => {
-//         console.log("Tiles loading...");
-//     });
-
-//     tiles.on("load", () => {
-//         console.log("Tiles loaded successfully.");
-//     });
-
-//     tiles.on("tileerror", (error) => {
-//         console.error("Tile failed:", error);
-//     });
-
-//     tiles.addTo(map);
-// });

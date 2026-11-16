@@ -41,6 +41,7 @@ def reverse_geocode(*, latitude, longitude):
 
     data = response.json()
 
+
     location_name = _format_location_name(data)
 
     cache.set(
@@ -52,6 +53,7 @@ def reverse_geocode(*, latitude, longitude):
     return location_name
 
 
+
 def _format_location_name(data):
     address = data.get("address", {})
 
@@ -59,6 +61,10 @@ def _format_location_name(data):
         address.get("neighbourhood")
         or address.get("suburb")
         or address.get("quarter")
+        or address.get("residential")
+        or address.get("hamlet")
+        or address.get("locality")
+        or address.get("city_district")
         or address.get("road")
     )
 
@@ -69,11 +75,12 @@ def _format_location_name(data):
         or address.get("municipality")
     )
 
+    county = address.get("county")
     state = address.get("state")
 
     parts = []
 
-    for part in (local_area, city, state):
+    for part in (local_area, city, county, state):
         if part and part not in parts:
             parts.append(part)
 

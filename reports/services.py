@@ -93,3 +93,76 @@ def _create_management_token(report):
     )
 
     return raw_token
+
+
+
+@transaction.atomic
+def resolve_report(*, report):
+    report = Report.objects.select_for_update().get(
+        pk=report.pk
+    )
+
+    # Only active reports can transition to resolved.
+    if report.status != Report.Status.ACTIVE:
+        return report
+
+    report.status = Report.Status.RESOLVED
+
+    report.save(
+        update_fields=["status", "updated_at"]
+    )
+
+    return report
+
+
+@transaction.atomic
+def remove_report(*, report):
+    report = Report.objects.select_for_update().get(
+        pk=report.pk
+    )
+
+    # Only active reports can be removed.
+    if report.status != Report.Status.ACTIVE:
+        return report
+
+    report.status = Report.Status.REMOVED
+
+    report.save(
+        update_fields=["status", "updated_at"]
+    )
+
+    return report
+
+@transaction.atomic
+def update_report(*, report, data):
+    report = Report.objects.select_for_update().get(pk=report.pk)
+
+    if report.status != Report.Status.ACTIVE:
+        raise ValueError("Only active reports can be edited.")
+
+    latitude = data["latitude"]
+    longitude = data["longitude"]
+
+    # Validate coordinate boundaries.
+    if not -90 <= latitude <= 90:
+        raise ValueError("Invalid latitude.")
+
+    if not -180 <= longitude <= 180:
+        raise ValueError("Invalid longitude.")
+
+    # Update ordinary report fields.
+    report.title = data["title"]
+    report.category = data["category"]
+    report.description = data["description"]
+    report.occurred_at = data["occurred_at"]
+    report.phone_number = data["phone_number"]
+
+    # Update location.
+    report.location = Point(longitude, latitude, srid=4326)
+    report.location_name = data.get("location_name", "")
+    report.location_accuracy = data.get("location_accuracy")
+    report.location_source = data.get("location_source")
+
+    report.save()
+
+    return report

@@ -34,6 +34,53 @@ from .selectors import (
 )
 
 
+from django.db.models import Count, Q
+
+
+def home(request):
+    report_type = request.GET.get("type")
+    if report_type not in {Report.ReportType.LOST, Report.ReportType.FOUND}:
+        report_type = None
+
+    recent_reports = get_public_reports(report_type=report_type)[:8]
+
+    if request.headers.get("HX-Request") and request.GET.get("section") == "recent":
+        return render(
+            request,
+            "reports/partials/_home_recent_grid.html",
+            {
+                "recent_reports": recent_reports,
+                "active_recent_type": report_type,
+            },
+        )
+
+    categories = (
+        Category.objects
+        .filter(is_active=True)
+        .annotate(
+            active_count=Count(
+                "reports",
+                filter=Q(reports__status=Report.Status.ACTIVE),
+            )
+        )
+        .order_by("name")
+    )
+
+    active_reports_count = Report.objects.filter(
+        status=Report.Status.ACTIVE
+    ).count()
+
+    return render(
+        request,
+        "reports/home.html",
+        {
+            "categories": categories,
+            "recent_reports": recent_reports,
+            "active_reports_count": active_reports_count,
+            "active_recent_type": report_type,
+        },
+    )
+
 def report_create(request, report_type=None):
     valid_types = {
         Report.ReportType.LOST,
@@ -232,16 +279,32 @@ def report_list(request):
     categories = (
         Category.objects
         .filter(is_active=True)
+        .annotate(
+            active_count=Count(
+                "reports",
+                filter=Q(reports__status=Report.Status.ACTIVE),
+            )
+        )
         .order_by("name")
     )
+
+    type_counts = None
+    if not request.headers.get("HX-Request"):
+        type_counts = Report.objects.filter(
+            status=Report.Status.ACTIVE
+        ).aggregate(
+            all=Count("id"),
+            lost=Count("id", filter=Q(type=Report.ReportType.LOST)),
+            found=Count("id", filter=Q(type=Report.ReportType.FOUND)),
+        )
 
     context = {
         "page_obj": page_obj,
         "categories": categories,
         "selected_type": report_type,
         "selected_category": category,
+        "type_counts": type_counts,
         "search_query": query,
-
         "nearby": nearby,
         "latitude": latitude,
         "longitude": longitude,
@@ -267,11 +330,26 @@ def report_detail(request, report_id):
         report_id=report_id,
     )
 
+    related_reports = list(
+        get_public_reports(
+            latitude=report.location.y,
+            longitude=report.location.x,
+            radius_km=10,
+        ).exclude(id=report.id)[:3]
+    )
+
+    if not related_reports:
+        related_reports = list(
+            get_public_reports(category=report.category.slug)
+            .exclude(id=report.id)[:3]
+        )
+
     return render(
         request,
         "reports/report_detail.html",
         {
             "report": report,
+            "related_reports": related_reports,
         },
     )
 

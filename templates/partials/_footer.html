@@ -1,0 +1,81 @@
+<footer class="mt-auto w-full bg-surface-container-lowest shadow-[0_-1px_6px_rgba(0,0,0,0.03)]">
+    <div class="app-container pt-12 pb-8">
+        <div class="grid grid-cols-1 gap-8 border-b border-surface-container pb-10 md:grid-cols-2 lg:grid-cols-5">
+            <!-- Brand Column -->
+            <div class="flex flex-col gap-4 lg:col-span-2">
+                <a href="{% url 'reports:home' %}" class="group inline-flex w-fit items-center gap-2.5">
+                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-container text-secondary-container transition-transform duration-300 group-hover:scale-105">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                            <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                    </span>
+                    <span class="text-lg font-bold tracking-tight text-primary">LostHub</span>
+                </a>
+
+                <p class="max-w-sm text-sm leading-relaxed text-on-surface-variant">
+                    LostHub helps reconnect people with their missing belongings across Nigerian campuses, neighbourhoods, and surrounding communities.
+                </p>
+
+                <div class="inline-flex w-fit items-center gap-1.5 rounded-full bg-secondary-container/40 px-3 py-1 text-[11px] font-bold text-on-secondary-container">
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <path d="m9 11 3 3L22 4"/>
+                    </svg>
+                    <span>Free Community Utility &bull; No Account Required</span>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="flex flex-col gap-3">
+                <h2 class="text-xs font-bold tracking-wider text-on-surface uppercase">Quick Links</h2>
+                <ul class="flex flex-col gap-2 text-xs text-on-surface-variant sm:text-sm">
+                    <li>
+                        <a href="{% url 'reports:home' %}" class="inline-block transition-all duration-200 hover:translate-x-1 hover:text-primary">Home</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'reports:list' %}" class="inline-block transition-all duration-200 hover:translate-x-1 hover:text-primary">Browse Reports</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'reports:create_by_type' 'lost' %}" class="inline-block transition-all duration-200 hover:translate-x-1 hover:text-primary">Report Lost Item</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'reports:create_by_type' 'found' %}" class="inline-block transition-all duration-200 hover:translate-x-1 hover:text-primary">Report Found Item</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'reports:home' %}#how-it-works" class="inline-block transition-all duration-200 hover:translate-x-1 hover:text-primary">How It Works</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Browse Types -->
+            <div class="flex flex-col gap-3">
+                <h2 class="text-xs font-bold tracking-wider text-on-surface uppercase">Discover</h2>
+                <ul class="flex flex-col gap-2 text-xs text-on-surface-variant sm:text-sm">
+                    <li>
+                        <a href="{% url 'reports:list' %}?type=lost" class="inline-block transition-all duration-200 hover:translate-x-1 hover:text-primary">Lost Items</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'reports:list' %}?type=found" class="inline-block transition-all duration-200 hover:translate-x-1 hover:text-primary">Found Items</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'reports:home' %}#nearby-reports" class="inline-block transition-all duration-200 hover:translate-x-1 hover:text-primary">Reports Near Me</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Privacy & Guest Management -->
+            <div class="flex flex-col gap-3">
+                <h2 class="text-xs font-bold tracking-wider text-on-surface uppercase">Trust &amp; Privacy</h2>
+                <p class="text-xs leading-relaxed text-on-surface-variant">
+                    Phone numbers stay hidden on public cards until a user clicks Contact Reporter. Reports are edited or closed securely via private management links.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex flex-col items-center justify-between gap-3 pt-6 text-xs text-on-surface-variant sm:flex-row">
+            <p>&copy; {% now "Y" %} LostHub. Lost something? Let's bring it home.</p>
+            <p>Map data &copy; OpenStreetMap contributors &amp; MapTiler.</p>
+        </div>
+    </div>
+</footer>

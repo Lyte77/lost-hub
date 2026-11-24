@@ -1,37 +1,80 @@
+<div class="space-y-4">
+    <!-- Action Buttons -->
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+        <button
+            type="button"
+            id="use-current-location"
+            data-reverse-geocode-url="{% url 'reports:reverse_geocode' %}"
+            class="btn bg-surface-container-high text-primary hover:bg-surface-container-highest flex-1 justify-center shadow-xs"
+        >
+            <svg class="h-4 w-4 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v3"/>
+                <path d="M12 19v3"/>
+                <path d="M2 12h3"/>
+                <path d="M19 12h3"/>
+            </svg>
+            <span>Use My Current Location</span>
+        </button>
 
-<section>
-    <h2>Where did this happen?</h2>
-
-    <button
-        type="button"
-        id="use-current-location"
-        data-reverse-geocode-url="{% url 'reports:reverse_geocode' %}"
-    >
-        Use my current location
-    </button>
-
-    <p id="location-status">
-        {{ initial_location_status|default:"No location selected." }}
-    </p>
-
-    <button
-        type="button"
-        id="choose-location-map"
-    >
-        Choose / adjust on map
-    </button>
-
-    <div id="map-wrapper" class="hidden">
-        <div
-            id="location-map"
-            data-maptiler-key="{{ maptiler_api_key }}"
-            data-initial-latitude="{{ initial_latitude|default:'' }}"
-            data-initial-longitude="{{ initial_longitude|default:'' }}"
-            style="height: 400px; width: 100%;"
-        ></div>
-
-        <p>
-            Click the map or drag the marker to select the location.
-        </p>
+        <button
+            type="button"
+            id="choose-location-map"
+            class="btn btn-secondary flex-1 justify-center"
+        >
+            <svg class="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+                <line x1="9" x2="9" y1="3" y2="18"/>
+                <line x1="15" x2="15" y1="6" y2="21"/>
+            </svg>
+            <span>Choose or Adjust on Map</span>
+        </button>
     </div>
-</section>
+
+    <!-- Clear Location Status Banner -->
+    <div
+        id="location-status-box"
+        class="rounded-xl border border-border bg-page p-3.5 transition-colors"
+        role="status"
+        aria-live="polite"
+    >
+        <div class="flex items-start gap-2.5">
+            <svg id="location-status-icon" class="mt-0.5 h-4 w-4 shrink-0 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <div class="min-w-0 flex-1">
+                <p id="location-status" class="text-sm font-semibold text-ink">
+                    {{ initial_location_status|default:"No location selected yet." }}
+                </p>
+                <p id="location-hint" class="mt-0.5 text-xs text-muted">
+                    Tap "Use My Current Location" if you are at the spot, or open the map to tap or drag the pin.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Leaflet Map Container -->
+    <div id="map-wrapper" class="hidden space-y-2.5">
+        <div class="relative overflow-hidden rounded-xl border border-surface-container bg-surface-container-low shadow-sm">
+            <div
+                id="location-map"
+                data-maptiler-key="{{ maptiler_api_key }}"
+                data-initial-latitude="{{ initial_latitude|default:'' }}"
+                data-initial-longitude="{{ initial_longitude|default:'' }}"
+                class="h-72 w-full sm:h-96"
+            ></div>
+        </div>
+
+        <div class="flex flex-col gap-1.5 rounded-lg bg-surface-container-low px-3.5 py-2.5 text-xs text-on-surface-variant sm:flex-row sm:items-center sm:justify-between">
+            <span class="flex items-center gap-1.5 font-medium text-on-surface">
+                <svg class="h-4 w-4 shrink-0 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="m9 12 2 2 4-4"/>
+                </svg>
+                Tap anywhere on the map or drag the pin to reposition.
+            </span>
+            <span class="text-outline">Map data &copy; OpenStreetMap contributors</span>
+        </div>
+    </div>
+</div>

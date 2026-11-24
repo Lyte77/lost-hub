@@ -1,0 +1,578 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}LostHub — Lost something? Let's bring it home.{% endblock %}
+
+{% block content %}
+<div class="flex w-full flex-col">
+    <!-- Hero Section -->
+    <section class="relative w-full overflow-hidden bg-gradient-to-b from-surface-container-low via-surface to-surface pt-10 pb-14 sm:pt-12 sm:pb-16">
+        <div class="animate-breathing pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary-fixed-dim/20 blur-3xl"></div>
+        <div class="animate-breathing pointer-events-none absolute top-1/2 -left-20 h-80 w-80 rounded-full bg-secondary-fixed/20 blur-3xl" style="animation-delay: -4s;"></div>
+
+        <div class="app-container relative z-10">
+            <div class="mx-auto flex max-w-3xl flex-col items-center gap-4 text-center">
+                <!-- Community Badge with Radar Pulse -->
+                <div class="inline-flex cursor-default items-center gap-2 rounded-full bg-surface-container-high px-4 py-1.5 text-xs font-semibold text-primary shadow-sm transition-all duration-300 hover:bg-surface-container-highest hover:shadow">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary opacity-75"></span>
+                        <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-secondary"></span>
+                    </span>
+                    <span>Community Lost &amp; Found &bull; Campuses &amp; Neighbourhoods</span>
+                </div>
+
+                <!-- Headline -->
+                <h1 class="text-3xl font-bold tracking-tight text-on-surface sm:text-5xl sm:leading-[1.15]">
+                    Lost something?
+                    <br class="hidden sm:inline">
+                    <span class="text-primary">Let's bring it home.</span>
+                </h1>
+
+                <!-- Supporting Text -->
+                <p class="max-w-2xl text-sm leading-relaxed text-on-surface-variant sm:text-base">
+                    Find lost items and reunite people with what matters. Search community reports or help someone find what they've lost.
+                </p>
+
+                <!-- Elevated Search Omnibar + Quick Keyword Pills -->
+                <div class="group/search mt-2 w-full max-w-2xl" x-data="{ selectedType: '' }">
+                    <form
+                        action="{% url 'reports:list' %}"
+                        method="get"
+                        class="relative flex items-center rounded-xl border border-transparent bg-surface-container-lowest p-1.5 shadow-md transition-all duration-300 hover:border-outline-variant/40 hover:shadow-lg focus-within:border-primary-container focus-within:ring-4 focus-within:ring-secondary-fixed-dim/40"
+                    >
+                        <input type="hidden" name="type" :value="selectedType">
+
+                        <svg class="ml-3 h-5 w-5 shrink-0 text-outline transition-transform duration-300 group-focus-within/search:scale-110 group-focus-within/search:text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.3-4.3"/>
+                        </svg>
+
+                        <label for="hero-search-input" class="sr-only">Search lost or found items</label>
+                        <input
+                            id="hero-search-input"
+                            type="search"
+                            name="q"
+                            placeholder="Search phones, wallets, keys, ID cards, or area..."
+                            autocomplete="off"
+                            class="w-full min-w-0 bg-transparent px-3 py-2.5 text-sm text-on-surface placeholder:text-outline focus:outline-none sm:text-base"
+                        >
+
+                        <button type="submit" class="btn btn-primary shrink-0 px-4 sm:px-6">
+                            <span>Search</span>
+                            <svg class="hidden h-4 w-4 sm:inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M5 12h14"/>
+                                <path d="m12 5 7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </form>
+
+                    <!-- LOST / FOUND Quick Filters + Quick Keyword Fillers -->
+                    <div class="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+                        <button
+                            type="button"
+                            @click="selectedType = ''"
+                            :class="selectedType === '' ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'"
+                            class="rounded-full px-3 py-1 text-xs font-bold transition-all duration-200 cursor-pointer"
+                        >
+                            All
+                        </button>
+                        <button
+                            type="button"
+                            @click="selectedType = 'lost'"
+                            :class="selectedType === 'lost' ? 'bg-amber-600 text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'"
+                            class="rounded-full px-3 py-1 text-xs font-bold transition-all duration-200 cursor-pointer"
+                        >
+                            Lost Only
+                        </button>
+                        <button
+                            type="button"
+                            @click="selectedType = 'found'"
+                            :class="selectedType === 'found' ? 'bg-secondary text-on-secondary' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'"
+                            class="rounded-full px-3 py-1 text-xs font-bold transition-all duration-200 cursor-pointer"
+                        >
+                            Found Only
+                        </button>
+
+                        <span class="mx-1 hidden text-xs text-outline sm:inline">|</span>
+
+                        <button type="button" class="quick-pill rounded-full bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-sm cursor-pointer">iPhone</button>
+                        <button type="button" class="quick-pill rounded-full bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-sm cursor-pointer">ID Card</button>
+                        <button type="button" class="quick-pill rounded-full bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-sm cursor-pointer">Wallet</button>
+                        <button type="button" class="quick-pill rounded-full bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-container-high hover:shadow-sm cursor-pointer">Keys</button>
+                    </div>
+                </div>
+
+                <!-- Dual Primary CTAs -->
+                <div class="mt-3 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row sm:gap-4">
+                    <a
+                        href="{% url 'reports:create_by_type' 'lost' %}"
+                        class="btn btn-navy group w-full px-7 py-3.5 sm:w-auto"
+                    >
+                        <svg class="h-5 w-5 transition-transform duration-200 group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.3-4.3"/>
+                        </svg>
+                        <span>I Lost Something</span>
+                    </a>
+
+                    <a
+                        href="{% url 'reports:create_by_type' 'found' %}"
+                        class="btn btn-teal group w-full px-7 py-3.5 sm:w-auto"
+                    >
+                        <svg class="h-5 w-5 transition-transform duration-200 group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <path d="m9 11 3 3L22 4"/>
+                        </svg>
+                        <span>I Found Something</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Trust Pillars Bar (No fake numbers) -->
+            <div class="mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-4 rounded-xl border border-transparent bg-surface-container-lowest p-5 shadow-sm transition-all duration-300 hover:border-surface-container sm:p-6 md:grid-cols-3">
+                <div class="group flex items-center gap-4 rounded-lg p-2">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-secondary-container/40 text-secondary transition-transform duration-300 group-hover:scale-110 group-hover:bg-secondary-container/70">
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                            <path d="m9 12 2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-base font-bold text-on-surface">Privacy Protected</p>
+                        <p class="text-xs text-on-surface-variant">Phone numbers stay hidden until requested</p>
+                    </div>
+                </div>
+
+                <div class="group flex items-center gap-4 rounded-lg p-2">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-tertiary-fixed/70 text-tertiary transition-transform duration-300 group-hover:scale-110 group-hover:bg-tertiary-fixed">
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 2v3"/>
+                            <path d="M12 19v3"/>
+                            <path d="M2 12h3"/>
+                            <path d="M19 12h3"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-base font-bold text-on-surface">Location Aware</p>
+                        <p class="text-xs text-on-surface-variant">Filter active items within 1–25 km of you</p>
+                    </div>
+                </div>
+
+                <div class="group flex items-center gap-4 rounded-lg p-2">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary-fixed/50 text-primary transition-transform duration-300 group-hover:scale-110 group-hover:bg-primary-fixed">
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-base font-bold text-on-surface">100% Free &amp; Open</p>
+                        <p class="text-xs text-on-surface-variant">Zero fees &amp; no account signup needed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Browse by Category -->
+    <section class="w-full bg-surface-container-low py-12 sm:py-16" aria-labelledby="categories-heading">
+        <div class="app-container">
+            <div class="reveal-on-scroll mb-8 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-end">
+                <div>
+                    <span class="text-xs font-bold tracking-widest text-primary uppercase">Directory</span>
+                    <h2 id="categories-heading" class="mt-1 text-2xl font-bold tracking-tight text-on-surface sm:text-3xl">
+                        Browse by category
+                    </h2>
+                    <p class="mt-1 text-sm text-on-surface-variant">
+                        Select an item group to explore live community reports.
+                    </p>
+                </div>
+                <a
+                    href="{% url 'reports:list' %}"
+                    class="group inline-flex items-center gap-1 text-sm font-bold text-secondary transition-colors hover:text-primary"
+                >
+                    <span>Explore All Reports</span>
+                    <svg class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                </a>
+            </div>
+
+            {% if categories %}
+                <div class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5">
+                    {% for category in categories %}
+                        <a
+                            href="{% url 'reports:list' %}?category={{ category.slug }}"
+                            class="card-interactive group flex flex-col justify-between p-4 sm:p-5"
+                        >
+                            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-surface-container-high text-primary transition-all duration-300 group-hover:scale-105 group-hover:bg-primary-container group-hover:text-on-primary">
+                                {% include "reports/partials/_category_icon.html" with slug=category.slug icon_class="h-6 w-6" %}
+                            </div>
+
+                            <div>
+                                <h3 class="text-base font-semibold text-on-surface transition-colors group-hover:text-primary">
+                                    {{ category.name }}
+                                </h3>
+                            </div>
+
+                            <div class="mt-3 flex items-center justify-between pt-2">
+                                <span class="inline-flex rounded-full bg-surface-container px-2.5 py-0.5 text-[11px] font-bold text-on-surface-variant transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                                    {% if category.active_count is not None %}
+                                        {{ category.active_count }} active
+                                    {% else %}
+                                        Browse
+                                    {% endif %}
+                                </span>
+                                <svg class="h-4 w-4 text-outline transition-all duration-200 group-hover:translate-x-1.5 group-hover:text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M5 12h14"/>
+                                    <path d="m12 5 7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-sm text-on-surface-variant">No categories available yet.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Recently Reported Items (Live Feed with Real HTMX Type Filter) -->
+    <section class="w-full bg-surface py-12 sm:py-16" aria-labelledby="recent-reports-heading">
+        <div class="app-container">
+            <div
+                x-data="{ filter: '{{ active_recent_type|default:'all' }}' }"
+                class="reveal-on-scroll flex flex-col justify-between gap-4 border-b border-surface-container pb-5 md:flex-row md:items-center"
+            >
+                <div class="flex items-center gap-3">
+                    <span class="relative flex h-3 w-3">
+                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"></span>
+                        <span class="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
+                    </span>
+                    <h2 id="recent-reports-heading" class="text-2xl font-bold tracking-tight text-on-surface sm:text-3xl">
+                        Recently reported items
+                    </h2>
+                    <span class="hidden sm:inline-flex rounded-full bg-surface-container-high px-2.5 py-0.5 text-[11px] font-bold text-on-surface-variant">
+                        Active
+                    </span>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="inline-flex rounded-lg bg-surface-container p-1 shadow-inner" role="group" aria-label="Filter recent reports">
+                        <button
+                            type="button"
+                            @click="filter = 'all'"
+                            hx-get="{% url 'reports:home' %}?section=recent"
+                            hx-target="#home-recent-grid"
+                            hx-swap="outerHTML"
+                            :class="filter === 'all' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'"
+                            class="rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer"
+                        >
+                            All
+                        </button>
+                        <button
+                            type="button"
+                            @click="filter = 'lost'"
+                            hx-get="{% url 'reports:home' %}?section=recent&type=lost"
+                            hx-target="#home-recent-grid"
+                            hx-swap="outerHTML"
+                            :class="filter === 'lost' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'"
+                            class="rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer"
+                        >
+                            Lost Only
+                        </button>
+                        <button
+                            type="button"
+                            @click="filter = 'found'"
+                            hx-get="{% url 'reports:home' %}?section=recent&type=found"
+                            hx-target="#home-recent-grid"
+                            hx-swap="outerHTML"
+                            :class="filter === 'found' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'"
+                            class="rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer"
+                        >
+                            Found Only
+                        </button>
+                    </div>
+
+                    <a
+                        href="{% url 'reports:list' %}"
+                        class="group inline-flex items-center gap-1 text-sm font-bold text-primary transition-colors hover:text-secondary"
+                    >
+                        <span>View All{% if active_reports_count %} ({{ active_reports_count }}){% endif %}</span>
+                        <svg class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M5 12h14"/>
+                            <path d="m12 5 7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            {% include "reports/partials/_home_recent_grid.html" %}
+        </div>
+    </section>
+
+    <!-- Nearby Reports Section (Real PostGIS Geolocation Search) -->
+    <section id="nearby-reports" class="w-full bg-surface-container-low py-12 sm:py-16" aria-labelledby="nearby-heading">
+        <div class="app-container">
+            <div class="card p-6 sm:p-8">
+                <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="max-w-xl">
+                        <div class="inline-flex w-fit items-center gap-1.5 rounded-full bg-secondary-container/40 px-3 py-1 text-[11px] font-bold text-on-secondary-container">
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 2v3"/>
+                                <path d="M12 19v3"/>
+                                <path d="M2 12h3"/>
+                                <path d="M19 12h3"/>
+                            </svg>
+                            <span>PostGIS Nearby Discovery</span>
+                        </div>
+                        <h2 id="nearby-heading" class="mt-3 text-2xl font-bold tracking-tight text-on-surface sm:text-3xl">
+                            Lost or found around you?
+                        </h2>
+                        <p class="mt-2 text-sm leading-relaxed text-on-surface-variant">
+                            Discover reports close to your location. Your browser will only ask for location permission when you click the button.
+                        </p>
+                    </div>
+
+                    <form
+                        id="home-nearby-form"
+                        hx-get="{% url 'reports:list' %}"
+                        hx-target="#home-nearby-results"
+                        hx-swap="innerHTML"
+                        hx-trigger="homeNearby"
+                        hx-indicator="#home-nearby-loading"
+                        class="flex flex-col gap-2.5 sm:flex-row sm:items-center"
+                    >
+                        <input type="hidden" name="lat" id="home-nearby-lat">
+                        <input type="hidden" name="lon" id="home-nearby-lon">
+                        <input type="hidden" name="nearby" id="home-nearby-enabled" value="0">
+
+                        <label for="home-nearby-radius" class="sr-only">Search radius</label>
+                        <select name="radius" id="home-nearby-radius" class="form-select sm:w-40">
+                            <option value="1">Within 1 km</option>
+                            <option value="5" selected>Within 5 km</option>
+                            <option value="10">Within 10 km</option>
+                            <option value="25">Within 25 km</option>
+                        </select>
+
+                        <button type="button" id="home-near-me-btn" class="btn btn-primary shrink-0">
+                            <svg class="h-4 w-4 text-secondary-container" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 2v3"/>
+                                <path d="M12 19v3"/>
+                                <path d="M2 12h3"/>
+                                <path d="M19 12h3"/>
+                            </svg>
+                            <span>Near me</span>
+                        </button>
+
+                        <button type="button" id="home-clear-nearby-btn" hidden class="btn btn-secondary shrink-0">
+                            Reset
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Privacy & Feedback Row -->
+                <div class="mt-5 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-container-low px-4 py-2.5 text-xs text-on-surface-variant">
+                    <p id="home-nearby-status" class="font-medium" role="status" aria-live="polite">
+                        Click "Near me" to find active lost and found items sorted by distance.
+                    </p>
+
+                    <div id="home-nearby-loading" class="htmx-indicator inline-flex items-center gap-2 font-semibold text-primary">
+                        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4z"></path>
+                        </svg>
+                        <span>Searching nearby reports...</span>
+                    </div>
+                </div>
+
+                <!-- HTMX Nearby Results -->
+                <div id="home-nearby-results" class="mt-5" hx-push-url="false"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How LostHub Works (01 / 02 / 03 Tonal Cards) -->
+    <section id="how-it-works" class="w-full bg-surface py-12 sm:py-16" aria-labelledby="how-it-works-heading">
+        <div class="app-container">
+            <div class="reveal-on-scroll mx-auto mb-10 max-w-2xl text-center">
+                <span class="text-xs font-bold tracking-widest text-secondary uppercase">Fast &amp; Transparent</span>
+                <h2 id="how-it-works-heading" class="mt-1 text-2xl font-bold tracking-tight text-on-surface sm:text-3xl">
+                    How LostHub works
+                </h2>
+                <p class="mt-2 text-sm text-on-surface-variant sm:text-base">
+                    Post without friction, match locally, and coordinate safe returns in three clear steps.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <!-- Step 1 -->
+                <div class="reveal-on-scroll group card flex flex-col justify-between overflow-hidden border border-transparent p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-secondary/30 hover:shadow-lg">
+                    <div>
+                        <div class="mb-4 flex items-start justify-between">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-container text-on-primary shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 20h9"/>
+                                    <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/>
+                                </svg>
+                            </div>
+                            <span class="select-none text-3xl font-extrabold text-surface-container-highest transition-colors duration-300 group-hover:text-primary-fixed-dim">01</span>
+                        </div>
+                        <h3 class="mb-2 text-lg font-semibold text-on-surface transition-colors group-hover:text-primary">
+                            1. Report
+                        </h3>
+                        <p class="text-sm leading-relaxed text-on-surface-variant">
+                            Share details about the lost or found item, attach up to five photos, and pin the location on the map.
+                        </p>
+                    </div>
+                    <div class="-mx-6 -mb-6 mt-5 flex items-center gap-1.5 bg-surface-container-low px-6 py-3 text-xs font-bold text-on-surface-variant transition-colors group-hover:bg-surface-container">
+                        <svg class="h-4 w-4 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                        <span>No account creation required</span>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="reveal-on-scroll group card flex flex-col justify-between overflow-hidden border border-transparent p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-secondary/30 hover:shadow-lg" style="transition-delay: 80ms;">
+                    <div>
+                        <div class="mb-4 flex items-start justify-between">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary text-on-secondary shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <path d="m21 21-4.3-4.3"/>
+                                </svg>
+                            </div>
+                            <span class="select-none text-3xl font-extrabold text-surface-container-highest transition-colors duration-300 group-hover:text-secondary-fixed-dim">02</span>
+                        </div>
+                        <h3 class="mb-2 text-lg font-semibold text-on-surface transition-colors group-hover:text-primary">
+                            2. Discover
+                        </h3>
+                        <p class="text-sm leading-relaxed text-on-surface-variant">
+                            Search reports by keyword, filter by category or type, and explore nearby listings within your radius.
+                        </p>
+                    </div>
+                    <div class="-mx-6 -mb-6 mt-5 flex items-center gap-1.5 bg-surface-container-low px-6 py-3 text-xs font-bold text-on-surface-variant transition-colors group-hover:bg-surface-container">
+                        <svg class="h-4 w-4 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                            <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        <span>Distance-sorted nearby search</span>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="reveal-on-scroll group card flex flex-col justify-between overflow-hidden border border-transparent p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-secondary/30 hover:shadow-lg" style="transition-delay: 160ms;">
+                    <div>
+                        <div class="mb-4 flex items-start justify-between">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-tertiary-container text-tertiary-fixed shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                            </div>
+                            <span class="select-none text-3xl font-extrabold text-surface-container-highest transition-colors duration-300 group-hover:text-tertiary-fixed-dim">03</span>
+                        </div>
+                        <h3 class="mb-2 text-lg font-semibold text-on-surface transition-colors group-hover:text-primary">
+                            3. Reconnect
+                        </h3>
+                        <p class="text-sm leading-relaxed text-on-surface-variant">
+                            Contact the reporter directly by phone or WhatsApp, verify ownership, and arrange a safe public return.
+                        </p>
+                    </div>
+                    <div class="-mx-6 -mb-6 mt-5 flex items-center gap-1.5 bg-surface-container-low px-6 py-3 text-xs font-bold text-on-surface-variant transition-colors group-hover:bg-surface-container">
+                        <svg class="h-4 w-4 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                            <path d="m9 12 2 2 4-4"/>
+                        </svg>
+                        <span>Private links to resolve anytime</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Community CTA Banner -->
+    <section class="w-full bg-surface py-10 sm:py-14" aria-labelledby="cta-heading">
+        <div class="app-container">
+            <div class="reveal-on-scroll animated-gradient-banner relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-container via-primary to-primary-container p-7 text-on-primary shadow-xl sm:p-10 lg:p-12">
+                <div class="animate-breathing pointer-events-none absolute -right-16 -bottom-16 h-80 w-80 rounded-full bg-secondary/20 blur-2xl"></div>
+
+                <div class="relative z-10 flex max-w-3xl flex-col gap-4">
+                    <div class="inline-flex w-fit items-center gap-1.5 rounded-full bg-secondary-container/20 px-3 py-1 text-[11px] font-bold text-secondary-fixed">
+                        <span>Open Community Platform</span>
+                    </div>
+
+                    <h2 id="cta-heading" class="text-2xl font-bold tracking-tight text-on-primary sm:text-3xl">
+                        Help someone find what matters.
+                    </h2>
+
+                    <p class="text-sm leading-relaxed text-primary-fixed sm:text-base">
+                        Found an unattended phone, wallet, student ID, or set of keys? Post a quick report so the rightful owner can reach you directly.
+                    </p>
+
+                    <div class="grid grid-cols-1 gap-3 border-t border-primary-fixed-dim/20 pt-4 sm:grid-cols-3">
+                        <div class="flex items-start gap-2">
+                            <svg class="mt-0.5 h-4 w-4 shrink-0 text-secondary-container" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <path d="m9 11 3 3L22 4"/>
+                            </svg>
+                            <p class="text-xs text-primary-fixed">Guest reporting with zero login friction</p>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <svg class="mt-0.5 h-4 w-4 shrink-0 text-secondary-container" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <path d="m9 11 3 3L22 4"/>
+                            </svg>
+                            <p class="text-xs text-primary-fixed">Direct WhatsApp and call links on demand</p>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <svg class="mt-0.5 h-4 w-4 shrink-0 text-secondary-container" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <path d="m9 11 3 3L22 4"/>
+                            </svg>
+                            <p class="text-xs text-primary-fixed">Private management link to close when returned</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col items-center gap-3 pt-2 sm:flex-row">
+                        <a
+                            href="{% url 'reports:create_by_type' 'lost' %}"
+                            class="btn w-full bg-surface-container-lowest px-6 py-3 text-primary shadow-sm hover:bg-surface-container-low hover:shadow-lg sm:w-auto"
+                        >
+                            Report a Lost Item
+                        </a>
+                        <a
+                            href="{% url 'reports:create_by_type' 'found' %}"
+                            class="btn w-full border border-white/25 bg-white/10 px-6 py-3 text-on-primary hover:bg-white/20 sm:w-auto"
+                        >
+                            Report a Found Item
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/nearby_reports.js' %}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.getElementById("hero-search-input");
+        const pills = document.querySelectorAll(".quick-pill");
+
+        if (!searchInput || !pills.length) return;
+
+        pills.forEach((pill) => {
+            pill.addEventListener("click", () => {
+                searchInput.value = pill.textContent.trim();
+                searchInput.focus();
+            });
+        });
+    });
+</script>
+{% endblock %}

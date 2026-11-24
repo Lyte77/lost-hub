@@ -1,153 +1,662 @@
-
 {% extends "base.html" %}
 
-{% block title %}Manage Report | LostHub{% endblock %}
+{% block title %}Manage Report — LostHub{% endblock %}
+
+{% block extra_head %}
+<meta name="referrer" content="same-origin">
+{% endblock %}
 
 {% block content %}
-<main class="mx-auto max-w-3xl px-4 py-10">
+<section
+    class="py-6 sm:py-10"
+    x-data="{ resolveOpen: false, removeOpen: false }"
+    x-effect="if (resolveOpen) $nextTick(() => $refs.resolveCancelBtn?.focus()); if (removeOpen) $nextTick(() => $refs.removeCancelBtn?.focus());"
+    @keydown.escape.window="resolveOpen = false; removeOpen = false"
+>
+    <div class="app-container">
+        <!-- Breadcrumb & Private Access Badge -->
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <nav class="flex flex-wrap items-center gap-1.5 text-xs text-muted sm:text-sm" aria-label="Breadcrumb">
+                <a href="{% url 'reports:home' %}" rel="noreferrer" class="hover:text-navy">Home</a>
+                <svg class="h-3.5 w-3.5 text-muted/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m9 18 6-6-6-6"/>
+                </svg>
+                <span class="font-medium text-ink">Manage Report</span>
+            </nav>
 
-    <div class="rounded-2xl border border-base-300 bg-base-100 p-6">
+            <!-- Click/Hover Disclosure Pill -->
+            <div x-data="{ tipOpen: false }" class="relative self-start sm:self-auto">
+                <button
+                    type="button"
+                    @click="tipOpen = !tipOpen"
+                    @click.outside="tipOpen = false"
+                    :aria-expanded="tipOpen.toString()"
+                    class="inline-flex min-h-9 items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold text-navy shadow-2xs hover:bg-page"
+                >
+                    <svg class="h-3.5 w-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    <span>Private Guest Access</span>
+                    <svg class="h-3.5 w-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 16v-4"/>
+                        <path d="M12 8h.01"/>
+                    </svg>
+                </button>
 
-        <p class="text-sm font-medium text-base-content/60">
-            Private report management
-        </p>
-
-        <h1 class="mt-2 text-2xl font-bold">
-            Manage your report
-        </h1>
-
-        <div class="mt-6 space-y-5">
-
-            <div>
-                <p class="text-sm text-base-content/60">Report title</p>
-                <h2 class="font-semibold">{{ report.title }}</h2>
+                <div
+                    x-show="tipOpen"
+                    x-cloak
+                    x-transition
+                    class="card absolute right-0 z-20 mt-2 w-72 p-3.5 shadow-lg"
+                >
+                    <p class="text-xs font-semibold text-navy">Secure Management Link</p>
+                    <p class="mt-1 text-xs leading-relaxed text-muted">
+                        You can edit or close this report without an account using this private link. Keep the page URL to yourself.
+                    </p>
+                </div>
             </div>
-
-            <div class="grid gap-4 sm:grid-cols-2">
-
-                <div>
-                    <p class="text-sm text-base-content/60">Report type</p>
-                    <p>{{ report.get_type_display }}</p>
-                </div>
-
-                <div>
-                    <p class="text-sm text-base-content/60">Status</p>
-                    <p>{{ report.get_status_display }}</p>
-                </div>
-
-                <div>
-                    <p class="text-sm text-base-content/60">Category</p>
-                    <p>{{ report.category.name }}</p>
-                </div>
-
-                <div>
-                    <p class="text-sm text-base-content/60">Location</p>
-                    <p>{{ report.location_name|default:"Not provided" }}</p>
-                </div>
-
-                <div>
-                    <p class="text-sm text-base-content/60">Contact number</p>
-                    <p>{{ report.phone_number }}</p>
-                </div>
-
-                <div>
-                    <p class="text-sm text-base-content/60">Date published</p>
-                    <p>{{ report.created_at|date:"M j, Y" }}</p>
-                </div>
-
-            </div>
-
-            <div>
-                <p class="text-sm text-base-content/60">Description</p>
-                <p class="mt-1">{{ report.description|default:"No description provided."|linebreaksbr }}</p>
-            </div>
-
         </div>
 
-        <div class="mt-8 rounded-xl bg-base-200 p-4">
-            <p class="text-sm">
-                Keep this management link private. Anyone who has it
-                can manage this report.
-            </p>
+        <!-- Page Header -->
+        <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="badge {% if report.type == 'lost' %}badge-lost{% else %}badge-found{% endif %}">
+                        {{ report.get_type_display }} Item
+                    </span>
+                    <span class="text-xs text-muted">
+                        Published {{ report.created_at|timesince }} ago
+                    </span>
+                </div>
+                <h1 class="mt-2 text-2xl font-bold tracking-tight text-navy sm:text-3xl">
+                    Manage your report
+                </h1>
+                <p class="mt-1.5 max-w-2xl text-sm text-muted sm:text-base">
+                    You're in control of this listing. Update details, mark the item as {% if report.type == "lost" %}recovered{% else %}returned{% endif %}, or remove it anytime without an account.
+                </p>
+            </div>
+
+            {% if is_active %}
+                <a
+                    href="{% url 'reports:detail' report.id %}"
+                    rel="noreferrer"
+                    class="btn btn-secondary btn-sm min-h-10 shrink-0 self-start px-3.5 sm:self-auto"
+                >
+                    <span>View public listing</span>
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" x2="21" y1="14" y2="3"/>
+                    </svg>
+                </a>
+            {% endif %}
         </div>
 
+        <!-- Report Status Banner -->
+        <div class="card mt-6 p-4 sm:p-5">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div class="flex items-start gap-3.5 sm:items-center">
+                    {% if is_active %}
+                        <span class="relative mt-1 flex h-3 w-3 shrink-0 sm:mt-0" aria-hidden="true">
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60"></span>
+                            <span class="relative inline-flex h-3 w-3 rounded-full bg-success"></span>
+                        </span>
+                        <div>
+                            <p class="text-xs font-bold tracking-wider text-success uppercase">
+                                Status: Active &amp; Searchable
+                            </p>
+                            <p class="mt-0.5 text-xs text-muted sm:text-sm">
+                                Visible in public listings and nearby search results.
+                            </p>
+                        </div>
+                    {% elif is_resolved %}
+                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <path d="m9 11 3 3L22 4"/>
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-xs font-bold tracking-wider text-navy uppercase">
+                                Status: {% if report.type == "lost" %}Recovered{% else %}Returned{% endif %}
+                            </p>
+                            <p class="mt-0.5 text-xs text-muted sm:text-sm">
+                                Closed and hidden from public search listings.
+                            </p>
+                        </div>
+                    {% else %}
+                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-page text-muted">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 16v-4"/>
+                                <path d="M12 8h.01"/>
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-xs font-bold tracking-wider text-muted uppercase">
+                                Status: Removed
+                            </p>
+                            <p class="mt-0.5 text-xs text-muted sm:text-sm">
+                                Removed from public listings.
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
 
-<section class="mt-8 border-t border-base-300 pt-6">
+                <!-- Real Metadata Strip -->
+                <div class="flex flex-wrap items-center gap-5 border-t border-border pt-3 text-xs md:border-t-0 md:pt-0">
+                    <div>
+                        <p class="font-medium text-muted">Category</p>
+                        <p class="mt-0.5 text-sm font-semibold text-ink">{{ report.category.name }}</p>
+                    </div>
+                    <div class="h-7 w-px bg-border"></div>
+                    <div>
+                        <p class="font-medium text-muted">Photos</p>
+                        <p class="mt-0.5 text-sm font-semibold text-ink">{{ report.images.count }}</p>
+                    </div>
+                    <div class="h-7 w-px bg-border"></div>
+                    <div>
+                        <p class="font-medium text-muted">Last updated</p>
+                        <p class="mt-0.5 text-sm font-semibold text-ink">{{ report.updated_at|date:"j M Y" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <h2 class="text-lg font-bold">
-        Report actions
-    </h2>
+        <!-- Main Operational Two-Column Grid -->
+        <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+            <!-- Left Column: Item Snapshot Card & Real Timestamps -->
+            <div class="space-y-5 lg:col-span-5">
+                <div class="card overflow-hidden">
+                    <!-- Primary Image / Fallback -->
+                    <div class="relative aspect-4/3 w-full bg-page">
+                        {% with first_image=report.images.all|first %}
+                            {% if first_image %}
+                                <img
+                                    src="{{ first_image.image.url }}"
+                                    alt="{{ report.title }}"
+                                    class="h-full w-full object-cover"
+                                >
+                            {% else %}
+                                <div class="flex h-full w-full flex-col items-center justify-center gap-2 bg-navy-soft/60 text-muted">
+                                    {% include "reports/partials/_category_icon.html" with slug=report.category.slug icon_class="h-8 w-8 text-navy/50" %}
+                                    <span class="text-xs font-medium">No photos attached</span>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
 
-   {% if is_active %}
+                        <div class="absolute top-3 left-3">
+                            <span class="badge shadow-xs {% if report.type == 'lost' %}badge-lost{% else %}badge-found{% endif %}">
+                                {{ report.get_type_display|upper }} ITEM
+                            </span>
+                        </div>
+                    </div>
 
-        <p class="mt-2 text-sm text-base-content/70">
-            Have you found the item or returned it to its owner?
-            Mark this report as resolved.
-        </p>
+                    <div class="space-y-4 p-5">
+                        <div>
+                            <p class="text-xs font-semibold tracking-wider text-muted uppercase">
+                                {{ report.category.name }}
+                            </p>
+                            <h2 class="mt-1 text-lg font-bold leading-snug text-ink">
+                                {{ report.title }}
+                            </h2>
+                        </div>
 
-        <form
-            method="post"
-            action="{% url 'reports:resolve' report.id token %}"
-            class="mt-4"
-            onsubmit="return confirm('Are you sure you want to mark this report as resolved?')"
-        >
-            {% csrf_token %}
+                        {% with images=report.images.all %}
+                            {% if images|length > 1 %}
+                                <div class="grid grid-cols-5 gap-2">
+                                    {% for image in images %}
+                                        <div class="aspect-square overflow-hidden rounded-lg border border-border bg-page">
+                                            <img
+                                                src="{{ image.image.url }}"
+                                                alt="{{ report.title }} — photo {{ forloop.counter }}"
+                                                loading="lazy"
+                                                class="h-full w-full object-cover"
+                                            >
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
 
-            <button
-                type="submit"
-                class="rounded-lg bg-green-600 px-5 py-3 font-semibold text-white hover:bg-green-700"
-            >
-                Mark as Resolved
-            </button>
-        </form>
+                        <dl class="space-y-2.5 border-t border-border pt-4 text-sm">
+                            <div class="flex items-start gap-2.5">
+                                <svg class="mt-0.5 h-4 w-4 shrink-0 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                <div class="min-w-0">
+                                    <dt class="sr-only">Location</dt>
+                                    <dd class="font-medium text-ink">
+                                        {{ report.location_name|default:"Location not provided" }}
+                                    </dd>
+                                </div>
+                            </div>
 
-        {% if is_active %}
+                            <div class="flex items-start gap-2.5">
+                                <svg class="mt-0.5 h-4 w-4 shrink-0 text-navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                                    <line x1="16" x2="16" y1="2" y2="6"/>
+                                    <line x1="8" x2="8" y1="2" y2="6"/>
+                                    <line x1="3" x2="21" y1="10" y2="10"/>
+                                </svg>
+                                <div>
+                                    <dt class="sr-only">Incident date</dt>
+                                    <dd class="text-muted">
+                                        {% if report.type == "lost" %}Lost on{% else %}Found on{% endif %}
+                                        <span class="font-medium text-ink">{{ report.occurred_at|date:"j M Y, g:i A" }}</span>
+                                    </dd>
+                                </div>
+                            </div>
 
-    <form
-        method="post"
-        action="{% url 'reports:remove' report.id token %}"
-        class="mt-4"
-        onsubmit="return confirm('Are you sure you want to remove this report? This will hide it from public listings.')"
-    >
-        {% csrf_token %}
+                            <div class="flex items-start gap-2.5">
+                                <svg class="mt-0.5 h-4 w-4 shrink-0 text-navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                <div>
+                                    <dt class="sr-only">Contact phone</dt>
+                                    <dd class="font-mono text-ink">{{ report.phone_number }}</dd>
+                                </div>
+                            </div>
+                        </dl>
 
-        <button
-            type="submit"
-            class="rounded-lg border border-red-500 px-5 py-3 font-semibold text-red-600 hover:bg-red-50"
-        >
-            Remove Report
-        </button>
-    </form>
+                        <div class="border-t border-border pt-4">
+                            <p class="text-xs font-medium text-muted">Description</p>
+                            <p class="mt-1 text-sm leading-relaxed text-ink">
+                                {{ report.description|default:"No description provided."|linebreaksbr }}
+                            </p>
+                        </div>
 
-{% endif %}
+                        {% if is_active %}
+                            <div
+                                x-data="{
+                                    copiedPublic: false,
+                                    publicUrl: window.location.origin + '{% url 'reports:detail' report.id %}',
+                                    async copyPublicUrl() {
+                                        try {
+                                            await navigator.clipboard.writeText(this.publicUrl);
+                                            this.copiedPublic = true;
+                                            setTimeout(() => { this.copiedPublic = false; }, 2000);
+                                        } catch (e) {}
+                                    }
+                                }"
+                                class="flex items-center justify-between gap-3 rounded-lg border border-border bg-page px-3.5 py-2.5"
+                            >
+                                <div class="flex min-w-0 items-center gap-2 text-xs font-medium text-ink">
+                                    <svg class="h-4 w-4 shrink-0 text-navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <circle cx="18" cy="5" r="3"/>
+                                        <circle cx="6" cy="12" r="3"/>
+                                        <circle cx="18" cy="19" r="3"/>
+                                        <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/>
+                                        <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>
+                                    </svg>
+                                    <span class="truncate">Share public listing link</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    @click="copyPublicUrl()"
+                                    class="btn btn-secondary btn-sm min-h-8 shrink-0 px-3"
+                                >
+                                    <span x-text="copiedPublic ? 'Copied!' : 'Copy link'">Copy link</span>
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
 
-{% if is_active %}
-    <a
-        href="{% url 'reports:edit' report.id token %}"
-        class="inline-block rounded-lg border px-4 py-2"
-    >
-        Edit report
-    </a>
-{% endif %}
+                <!-- Real Record Timestamps -->
+                <div class="card p-5">
+                    <h3 class="text-sm font-semibold text-navy">Report record</h3>
+                    <dl class="mt-3 space-y-2.5 text-xs">
+                        <div class="flex items-center justify-between gap-4">
+                            <dt class="text-muted">Published</dt>
+                            <dd class="font-medium text-ink">{{ report.created_at|date:"j M Y, g:i A" }}</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <dt class="text-muted">Last edited</dt>
+                            <dd class="font-medium text-ink">{{ report.updated_at|date:"j M Y, g:i A" }}</dd>
+                        </div>
+                        {% if report.management_token.last_used_at %}
+                            <div class="flex items-center justify-between gap-4">
+                                <dt class="text-muted">Management accessed</dt>
+                                <dd class="font-medium text-ink">{{ report.management_token.last_used_at|date:"j M Y, g:i A" }}</dd>
+                            </div>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
 
-    {% elif is_resolved %}
+            <!-- Right Column: Operational Actions Stack -->
+            <div class="space-y-4 lg:col-span-7">
+                <h2 class="text-base font-semibold text-navy">Available actions</h2>
 
-        <p class="mt-3 rounded-lg bg-green-100 p-4 text-green-800">
-            This report has been marked as resolved.
-        </p>
+                {% if is_active %}
+                    <!-- Action 1: Edit Details -->
+                    <div class="card p-5 sm:p-6">
+                        <div class="flex items-start gap-4">
+                            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-navy-soft text-navy">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 20h9"/>
+                                    <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/>
+                                </svg>
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="text-base font-semibold text-ink">Edit report information</h3>
+                                <p class="mt-1 text-sm leading-relaxed text-muted">
+                                    Update the item title, category, description, incident date, contact phone number, or adjust the pinned map location.
+                                </p>
+                                <div class="mt-4 flex justify-end">
+                                    <a
+                                        href="{% url 'reports:edit' report.id token %}"
+                                        class="btn btn-navy w-full sm:w-auto"
+                                    >
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M12 20h9"/>
+                                            <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/>
+                                        </svg>
+                                        <span>Edit report details</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    {% else %}
+                    <!-- Action 2: Resolve (Recovered / Returned) -->
+                    <div class="card border-success-border p-5 sm:p-6">
+                        <div class="flex items-start gap-4">
+                            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-success-soft text-success">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                    <path d="m9 11 3 3L22 4"/>
+                                </svg>
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-base font-semibold text-ink">
+                                        {% if report.type == "lost" %}
+                                            Mark item as recovered
+                                        {% else %}
+                                            Mark item as returned
+                                        {% endif %}
+                                    </h3>
+                                    <span class="badge badge-found">Close listing</span>
+                                </div>
+                                <p class="mt-1 text-sm leading-relaxed text-muted">
+                                    {% if report.type == "lost" %}
+                                        Have you gotten your item back? Closing this report hides it from public search so people stop calling about it.
+                                    {% else %}
+                                        Have you safely handed this item back to its owner? Closing this report hides it from public search so people stop calling about it.
+                                    {% endif %}
+                                </p>
 
-        <p class="mt-3 rounded-lg bg-base-200 p-4">
-            This report has been removed from public listings.
-        </p>
+                                <div class="mt-4 flex justify-end">
+                                    <button
+                                        type="button"
+                                        @click="resolveOpen = true"
+                                        class="btn btn-success w-full sm:w-auto"
+                                    >
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                            <path d="m9 11 3 3L22 4"/>
+                                        </svg>
+                                        <span>
+                                            {% if report.type == "lost" %}
+                                                I have recovered my item
+                                            {% else %}
+                                                I have returned this item
+                                            {% endif %}
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    {% endif %}
+                    <!-- Action 3: Soft Remove Report -->
+                    <div class="card p-5 sm:p-6">
+                        <div class="flex items-start gap-4">
+                            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-error-soft text-error">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M3 6h18"/>
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                </svg>
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="text-base font-semibold text-ink">Remove report</h3>
+                                <p class="mt-1 text-sm leading-relaxed text-muted">
+                                    Take this listing down if it was posted by mistake or you no longer want it publicly searchable. Removed reports cannot be edited or reopened.
+                                </p>
+                                <div class="mt-4 flex justify-end">
+                                    <button
+                                        type="button"
+                                        @click="removeOpen = true"
+                                        class="btn btn-danger-outline w-full sm:w-auto"
+                                    >
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M3 6h18"/>
+                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                        </svg>
+                                        <span>Remove report</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-</section>
+                {% elif is_resolved %}
+                    <div class="card p-6">
+                        <div class="alert alert-success">
+                            <svg class="mt-0.5 h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <path d="m9 11 3 3L22 4"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold">
+                                    {% if report.type == "lost" %}
+                                        This item has been marked as recovered
+                                    {% else %}
+                                        This item has been marked as returned
+                                    {% endif %}
+                                </p>
+                                <p class="mt-1 text-xs sm:text-sm">
+                                    Your report is closed and no longer appears in public search results.
+                                </p>
+                            </div>
+                        </div>
 
+                        <div class="mt-5 flex flex-wrap gap-3">
+                            <a href="{% url 'reports:list' %}" rel="noreferrer" class="btn btn-secondary">
+                                Browse active reports
+                            </a>
+                            <a href="{% url 'reports:create' %}" rel="noreferrer" class="btn btn-primary">
+                                Report another item
+                            </a>
+                        </div>
+                    </div>
 
+                {% else %}
+                    <div class="card p-6">
+                        <div class="alert alert-info">
+                            <svg class="mt-0.5 h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 16v-4"/>
+                                <path d="M12 8h.01"/>
+                            </svg>
+                            <div>
+                                <p class="font-semibold">This report has been removed</p>
+                                <p class="mt-1 text-xs sm:text-sm">
+                                    It is hidden from public listings and can no longer be edited.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 flex flex-wrap gap-3">
+                            <a href="{% url 'reports:list' %}" rel="noreferrer" class="btn btn-secondary">
+                                Browse active reports
+                            </a>
+                            <a href="{% url 'reports:create' %}" rel="noreferrer" class="btn btn-primary">
+                                Create a new report
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Bottom Privacy & Bookmark Notice -->
+        <div class="mt-8 rounded-xl border border-warning-border bg-warning-soft p-4 sm:p-5">
+            <div class="flex items-start gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface text-warning shadow-2xs">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+                    </svg>
+                </span>
+                <div>
+                    <p class="text-sm font-semibold text-ink">Keep this management page private</p>
+                    <p class="mt-0.5 text-xs leading-relaxed text-muted sm:text-sm">
+                        Bookmark this page in your browser if you need to return later. Anyone who has this private link can edit, close, or remove this report.
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 
-</main>
+    <!-- Confirmation Modals -->
+    {% if is_active %}
+        <!-- Modal: Confirm Resolution -->
+        <div
+            x-show="resolveOpen"
+            x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="resolve-modal-title"
+        >
+            <div
+                @click.outside="resolveOpen = false"
+                class="card w-full max-w-md p-6 shadow-xl"
+            >
+                <div class="flex items-start justify-between gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <path d="m9 11 3 3L22 4"/>
+                        </svg>
+                    </span>
+                    <button
+                        type="button"
+                        @click="resolveOpen = false"
+                        aria-label="Close dialog"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:bg-page hover:text-ink"
+                    >
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M18 6 6 18"/>
+                            <path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <h3 id="resolve-modal-title" class="mt-3 text-lg font-bold text-navy">
+                    {% if report.type == "lost" %}
+                        Confirm item recovered?
+                    {% else %}
+                        Confirm item returned?
+                    {% endif %}
+                </h3>
+                <p class="mt-1.5 text-sm leading-relaxed text-muted">
+                    {% if report.type == "lost" %}
+                        Marking <strong class="font-semibold text-ink">{{ report.title }}</strong> as recovered will close this report and hide it from public search results.
+                    {% else %}
+                        Marking <strong class="font-semibold text-ink">{{ report.title }}</strong> as returned will close this report and hide it from public search results.
+                    {% endif %}
+                </p>
+
+                <div class="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
+                    <button
+                        type="button"
+                        x-ref="resolveCancelBtn"
+                        @click="resolveOpen = false"
+                        class="btn btn-secondary w-full sm:w-auto"
+                    >
+                        Cancel
+                    </button>
+                    <form method="post" action="{% url 'reports:resolve' report.id token %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success w-full sm:w-auto">
+                            {% if report.type == "lost" %}
+                                Yes, I recovered my item
+                            {% else %}
+                                Yes, I returned this item
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Confirm Removal -->
+        <div
+            x-show="removeOpen"
+            x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-modal-title"
+        >
+            <div
+                @click.outside="removeOpen = false"
+                class="card w-full max-w-md p-6 shadow-xl"
+            >
+                <div class="flex items-start justify-between gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-error-soft text-error">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>
+                            <path d="M12 9v4"/>
+                            <path d="M12 17h.01"/>
+                        </svg>
+                    </span>
+                    <button
+                        type="button"
+                        @click="removeOpen = false"
+                        aria-label="Close dialog"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:bg-page hover:text-ink"
+                    >
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M18 6 6 18"/>
+                            <path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <h3 id="remove-modal-title" class="mt-3 text-lg font-bold text-navy">
+                    Remove this report?
+                </h3>
+                <p class="mt-1.5 text-sm leading-relaxed text-muted">
+                    This will remove <strong class="font-semibold text-ink">{{ report.title }}</strong> from public listings immediately. You will no longer be able to edit or reopen it.
+                </p>
+
+                <div class="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
+                    <button
+                        type="button"
+                        x-ref="removeCancelBtn"
+                        @click="removeOpen = false"
+                        class="btn btn-secondary w-full sm:w-auto"
+                    >
+                        Keep report
+                    </button>
+                    <form method="post" action="{% url 'reports:remove' report.id token %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn w-full bg-error text-white hover:brightness-95 sm:w-auto">
+                            Yes, remove report
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</section>
 {% endblock %}

@@ -1,143 +1,497 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Browse Lost &amp; Found Reports — LostHub{% endblock %}
 
 {% block content %}
+<div
+    class="flex w-full flex-col"
+    x-data="{
+        mobileFiltersOpen: false,
+        viewMode: 'grid'
+    }"
+    @keydown.escape.window="mobileFiltersOpen = false"
+>
+    <!-- Top Utility Context Bar & Breadcrumbs -->
+    <section class="w-full bg-surface-container-lowest shadow-sm">
+        <div class="app-container flex flex-wrap items-center justify-between gap-3 py-3.5">
+            <nav aria-label="Breadcrumb" class="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant sm:text-sm">
+                <a href="{% url 'reports:home' %}" class="inline-flex items-center gap-1 transition-colors hover:text-primary">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span>Home</span>
+                </a>
+                <svg class="h-3.5 w-3.5 text-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m9 18 6-6-6-6"/>
+                </svg>
+                <span class="font-semibold text-on-surface">Browse Reports</span>
+            </nav>
 
-<section>
+            <div class="flex items-center gap-4">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-surface-container px-2.5 py-0.5 text-[11px] font-bold text-on-surface-variant">
+                    <span class="h-2 w-2 animate-pulse rounded-full bg-secondary"></span>
+                    <span>Active Community Feed</span>
+                </span>
+                <a
+                    href="{% url 'reports:create' %}"
+                    class="hidden items-center gap-1 text-xs font-semibold text-primary hover:underline sm:inline-flex"
+                >
+                    <span>Can't find your item? Post report</span>
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M5 12h14"/>
+                        <path d="m12 5 7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
 
-    <header>
-        <h1>
-            Lost & Found Reports
-        </h1>
-    </header>
-
-
+    <!-- Single Unified HTMX Form (wraps Omnibar + Filter Sidebar so all inputs stay synced) -->
     <form
         id="report-filters"
+        action="{% url 'reports:list' %}"
+        method="get"
         hx-get="{% url 'reports:list' %}"
         hx-target="#report-results"
-        hx-swap="outerHTML"
-        hx-trigger="change,  keyup changed delay:400ms from:#report-search,nearby"
+        hx-swap="outerHTML show:#report-results-region:top"
+        hx-trigger="submit, change from:select, change from:input[type=radio], input changed delay:400ms from:#report-search, nearby"
+        hx-push-url="true"
+        hx-indicator="#discovery-loading"
     >
+        <!-- Page Header & Omnibar Search -->
+        <section class="w-full bg-surface-container-low pt-8 pb-10 sm:pt-10 sm:pb-12">
+            <div class="app-container">
+                <div class="mb-6 max-w-3xl">
+                    <div class="mb-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.3-4.3"/>
+                        </svg>
+                        <span>Community Discovery</span>
+                    </div>
+                    <h1 class="text-2xl font-bold tracking-tight text-on-surface sm:text-4xl">
+                        Find what you're looking for.
+                    </h1>
+                    <p class="mt-1.5 text-sm text-on-surface-variant sm:text-base">
+                        Explore lost and found items reported across Nigerian campuses, neighbourhoods, and surrounding communities.
+                    </p>
+                </div>
 
-     <input
-        type="search"
-        id="report-search"
-        name="q"
-        value="{{ search_query }}"
-        placeholder="Search phones, wallets, keys..."
-        autocomplete="off"
-    >
+                <!-- Elevated Search Omnibar -->
+                <div class="w-full max-w-5xl rounded-xl bg-surface-container-lowest p-2 shadow-md">
+                    <div class="flex flex-col items-stretch gap-2 md:flex-row">
+                        <!-- Keyword Input -->
+                        <div class="relative flex min-w-0 flex-1 items-center">
+                            <svg class="pointer-events-none absolute left-3.5 h-5 w-5 text-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="m21 21-4.3-4.3"/>
+                            </svg>
+                            <label for="report-search" class="sr-only">Search reports</label>
+                            <input
+                                type="search"
+                                id="report-search"
+                                name="q"
+                                value="{{ search_query }}"
+                                placeholder="Search by title, description, category, or location..."
+                                autocomplete="off"
+                                class="w-full rounded-lg bg-surface-container-low/50 py-3 pr-9 pl-10 text-sm text-on-surface transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                            >
+                            <button
+                                type="button"
+                                id="clear-search-btn"
+                                title="Clear search"
+                                aria-label="Clear search text"
+                                class="absolute right-2 rounded-full p-1 text-outline transition-colors hover:bg-surface-container hover:text-on-surface cursor-pointer"
+                            >
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M18 6 6 18"/>
+                                    <path d="m6 6 12 12"/>
+                                </svg>
+                            </button>
+                        </div>
 
-        <select name="type">
+                        <!-- Nearby Hidden State + Radius Selector -->
+                        <input type="hidden" name="lat" id="nearby-latitude" value="{{ latitude|default_if_none:'' }}">
+                        <input type="hidden" name="lon" id="nearby-longitude" value="{{ longitude|default_if_none:'' }}">
+                        <input type="hidden" name="nearby" id="nearby-enabled" value="{% if nearby %}1{% else %}0{% endif %}">
 
-            <option value="">
-                All reports
-            </option>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <div class="relative flex min-w-0 flex-1 items-center md:w-40 md:flex-none">
+                                <svg class="pointer-events-none absolute left-3 h-4 w-4 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                <label for="nearby-radius" class="sr-only">Nearby search radius</label>
+                                <select
+                                    name="radius"
+                                    id="nearby-radius"
+                                    class="w-full cursor-pointer appearance-none rounded-lg bg-surface-container-low/50 py-3 pr-8 pl-9 text-sm text-on-surface transition-all focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                                >
+                                    <option value="1" {% if radius_km == 1 %}selected{% endif %}>Within 1 km</option>
+                                    <option value="5" {% if radius_km == 5 %}selected{% endif %}>Within 5 km</option>
+                                    <option value="10" {% if radius_km == 10 %}selected{% endif %}>Within 10 km</option>
+                                    <option value="25" {% if radius_km == 25 %}selected{% endif %}>Within 25 km</option>
+                                </select>
+                                <svg class="pointer-events-none absolute right-2.5 h-4 w-4 text-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="m6 9 6 6 6-6"/>
+                                </svg>
+                            </div>
 
-            <option
-                value="lost"
-                {% if selected_type == "lost" %}
-                    selected
-                {% endif %}
-            >
-                Lost
-            </option>
+                            <button
+                                type="button"
+                                id="near-me-button"
+                                class="btn btn-primary shrink-0 px-4"
+                            >
+                                <svg class="h-4 w-4 text-secondary-container" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M12 2v3"/>
+                                    <path d="M12 19v3"/>
+                                    <path d="M2 12h3"/>
+                                    <path d="M19 12h3"/>
+                                </svg>
+                                <span>Near Me</span>
+                            </button>
 
-            <option
-                value="found"
-                {% if selected_type == "found" %}
-                    selected
-                {% endif %}
-            >
-                Found
-            </option>
+                            <button
+                                type="button"
+                                id="clear-nearby-button"
+                                class="btn bg-surface-container-high text-on-surface-variant hover:bg-surface-container hover:text-on-surface shrink-0 px-3"
+                                {% if not nearby %}hidden{% endif %}
+                            >
+                                Clear
+                            </button>
+                        </div>
 
-        </select>
+                        <!-- Submit & Reset -->
+                        <div class="flex shrink-0 items-center gap-2">
+                            <button type="submit" class="btn btn-navy flex-1 px-5 md:flex-none">
+                                <span>Find Items</span>
+                            </button>
+                            <button
+                                type="button"
+                                id="reset-filters-button"
+                                title="Reset all filters"
+                                class="btn bg-surface-container-high text-on-surface-variant hover:bg-surface-container hover:text-on-surface px-3.5"
+                            >
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
+                <!-- Nearby Status Feedback -->
+                <p id="nearby-status" class="mt-3 text-xs font-semibold text-primary empty:hidden" role="status" aria-live="polite">
+                    {% if nearby %}Showing active reports within {{ radius_km|floatformat:0 }} km of your location.{% endif %}
+                </p>
+            </div>
+        </section>
 
-        <select name="category">
-
-            <option value="">
-                All categories
-            </option>
-
-            {% for category in categories %}
-
-                <option
-                    value="{{ category.slug }}"
-                    {% if selected_category == category.slug %}
-                        selected
-                    {% endif %}
+        <!-- Main Discovery Workspace -->
+        <section class="app-container py-8 sm:py-10">
+            <div class="flex flex-col items-start gap-6 lg:flex-row lg:gap-8">
+                <!-- FILTER SIDEBAR (Desktop Sidebar + Mobile Modal Drawer from one DOM source) -->
+                <aside
+                    :class="mobileFiltersOpen ? 'fixed inset-0 z-50 flex flex-col bg-on-surface/50 p-4 overflow-y-auto lg:static lg:inset-auto lg:z-auto lg:bg-transparent lg:p-0' : 'hidden lg:flex'"
+                    @click.self="mobileFiltersOpen = false"
+                    class="w-full shrink-0 flex-col gap-5 lg:w-72"
+                    aria-label="Report filters"
                 >
-                    {{ category.name }}
-                </option>
+                    <div class="mx-auto flex w-full max-w-md flex-col gap-5 rounded-2xl bg-surface p-5 shadow-xl lg:max-w-none lg:rounded-none lg:bg-transparent lg:p-0 lg:shadow-none">
+                        <!-- Sidebar Header -->
+                        <div class="flex items-center justify-between pb-1">
+                            <div class="flex items-center gap-2">
+                                <svg class="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                                </svg>
+                                <h2 class="text-base font-bold text-on-surface">Filters</h2>
+                            </div>
 
-            {% endfor %}
+                            <div class="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    onclick="document.getElementById('reset-filters-button').click()"
+                                    class="text-xs font-semibold text-secondary hover:underline cursor-pointer"
+                                >
+                                    Reset All
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="mobileFiltersOpen = false"
+                                    aria-label="Close filters"
+                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-on-surface lg:hidden"
+                                >
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M18 6 6 18"/>
+                                        <path d="m6 6 12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
 
-        </select>
+                        <!-- Filter 1: Report Type (Single Select) -->
+                        <div class="card flex flex-col gap-2.5 p-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-semibold text-on-surface">Report Type</h3>
+                                <span class="text-[11px] text-outline">Single select</span>
+                            </div>
 
-        <input
-    type="hidden"
-    name="lat"
-    id="nearby-latitude"
->
+                            <div class="flex flex-col gap-1.5 pt-1">
+                                <label class="flex cursor-pointer items-center justify-between rounded-lg p-2 transition-colors hover:bg-surface-container-low">
+                                    <div class="flex items-center gap-2.5">
+                                        <input
+                                            id="filter-type-all"
+                                            type="radio"
+                                            name="type"
+                                            value=""
+                                            class="h-4 w-4 accent-primary"
+                                            {% if not selected_type %}checked{% endif %}
+                                        >
+                                        <span class="text-sm font-medium text-on-surface">All Reports</span>
+                                    </div>
+                                    {% if type_counts %}
+                                        <span class="rounded-full bg-surface-container-high px-2 py-0.5 text-xs font-semibold text-on-surface-variant">
+                                            {{ type_counts.all }}
+                                        </span>
+                                    {% endif %}
+                                </label>
 
-<input
-    type="hidden"
-    name="lon"
-    id="nearby-longitude"
->
+                                <label class="flex cursor-pointer items-center justify-between rounded-lg p-2 transition-colors hover:bg-surface-container-low">
+                                    <div class="flex items-center gap-2.5">
+                                        <input
+                                            id="filter-type-lost"
+                                            type="radio"
+                                            name="type"
+                                            value="lost"
+                                            class="h-4 w-4 accent-primary"
+                                            {% if selected_type == "lost" %}checked{% endif %}
+                                        >
+                                        <span class="flex items-center gap-1.5 text-sm font-medium text-on-surface-variant">
+                                            <span class="h-2 w-2 rounded-full bg-tertiary-fixed-dim"></span>
+                                            Lost Items
+                                        </span>
+                                    </div>
+                                    {% if type_counts %}
+                                        <span class="rounded-full bg-surface-container px-2 py-0.5 text-xs font-semibold text-on-surface-variant">
+                                            {{ type_counts.lost }}
+                                        </span>
+                                    {% endif %}
+                                </label>
 
-<input
-    type="hidden"
-    name="nearby"
-    id="nearby-enabled"
-    value="0"
->
+                                <label class="flex cursor-pointer items-center justify-between rounded-lg p-2 transition-colors hover:bg-surface-container-low">
+                                    <div class="flex items-center gap-2.5">
+                                        <input
+                                            id="filter-type-found"
+                                            type="radio"
+                                            name="type"
+                                            value="found"
+                                            class="h-4 w-4 accent-primary"
+                                            {% if selected_type == "found" %}checked{% endif %}
+                                        >
+                                        <span class="flex items-center gap-1.5 text-sm font-medium text-on-surface-variant">
+                                            <span class="h-2 w-2 rounded-full bg-secondary"></span>
+                                            Found Items
+                                        </span>
+                                    </div>
+                                    {% if type_counts %}
+                                        <span class="rounded-full bg-surface-container px-2 py-0.5 text-xs font-semibold text-on-surface-variant">
+                                            {{ type_counts.found }}
+                                        </span>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
 
-<select
-    name="radius"
-    id="nearby-radius"
->
-    <option value="1">
-        Within 1 km
-    </option>
+                        <!-- Filter 2: Categories (Real DB Categories, Single Select) -->
+                        <div class="card flex flex-col gap-2.5 p-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-semibold text-on-surface">Category</h3>
+                                <span class="text-[11px] text-outline">From directory</span>
+                            </div>
 
-    <option value="5" selected>
-        Within 5 km
-    </option>
+                            <div class="flex flex-col gap-1.5 pt-1 text-sm text-on-surface-variant">
+                                <label class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 transition-colors hover:bg-surface-container-low hover:text-on-surface">
+                                    <div class="flex items-center gap-2.5">
+                                        <input
+                                            id="filter-category-all"
+                                            type="radio"
+                                            name="category"
+                                            value=""
+                                            class="h-4 w-4 accent-primary"
+                                            {% if not selected_category %}checked{% endif %}
+                                        >
+                                        <span class="font-medium text-on-surface">All Categories</span>
+                                    </div>
+                                </label>
 
-    <option value="10">
-        Within 10 km
-    </option>
+                                {% for category in categories %}
+                                    <label class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 transition-colors hover:bg-surface-container-low hover:text-on-surface">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <input
+                                                type="radio"
+                                                name="category"
+                                                value="{{ category.slug }}"
+                                                class="h-4 w-4 shrink-0 accent-primary"
+                                                {% if selected_category == category.slug %}checked{% endif %}
+                                            >
+                                            <span class="truncate">{{ category.name }}</span>
+                                        </div>
+                                        {% if category.active_count is not None %}
+                                            <span class="text-xs text-outline">{{ category.active_count }}</span>
+                                        {% endif %}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
 
-    <option value="25">
-        Within 25 km
-    </option>
-</select>
+                        <!-- Safety Callout Mini-Card -->
+                        <div class="flex flex-col gap-2 rounded-xl bg-surface-container-high/60 p-4">
+                            <div class="flex items-center gap-1.5 text-xs font-bold text-primary">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                                    <path d="m9 12 2 2 4-4"/>
+                                </svg>
+                                <span>Safe Exchange Tips</span>
+                            </div>
+                            <p class="text-xs leading-relaxed text-on-surface-variant">
+                                Meet during daytime in populated public places such as security posts or receptions. Never pay release fees before verifying your item.
+                            </p>
+                        </div>
 
-<button
-    type="button"
-    id="near-me-button"
->
-    📍 Near me
-</button>
+                        <button
+                            type="button"
+                            @click="mobileFiltersOpen = false"
+                            class="btn btn-primary w-full lg:hidden"
+                        >
+                            Apply &amp; View Results
+                        </button>
+                    </div>
+                </aside>
 
-<button
-    type="button"
-    id="clear-nearby-button"
-    hidden
->
-    Clear nearby
-</button>
+                <!-- RIGHT RESULTS WORKSPACE -->
+                <div class="flex w-full min-w-0 flex-1 flex-col gap-4">
+                    <!-- Top Controls Bar -->
+                    <div class="card flex flex-col gap-3 p-4">
+                        <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                            <!-- Type Quick Tabs (Synced to sidebar radios) -->
+                            <div class="inline-flex w-fit rounded-lg bg-surface-container-low p-1" role="group" aria-label="Filter by report type">
+                                <button
+                                    type="button"
+                                    onclick="document.getElementById('filter-type-all').click()"
+                                    class="rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer {% if not selected_type %}bg-surface-container-lowest text-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}"
+                                    x-data
+                                    @htmx:after-swap.window="
+                                        const allChecked = document.getElementById('filter-type-all')?.checked;
+                                        $el.className = allChecked
+                                            ? 'rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer bg-surface-container-lowest text-primary shadow-sm'
+                                            : 'rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer text-on-surface-variant hover:text-on-surface';
+                                    "
+                                >
+                                    All{% if type_counts %} <span class="ml-1 opacity-70">{{ type_counts.all }}</span>{% endif %}
+                                </button>
+                                <button
+                                    type="button"
+                                    onclick="document.getElementById('filter-type-lost').click()"
+                                    class="rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer {% if selected_type == 'lost' %}bg-surface-container-lowest text-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}"
+                                    x-data
+                                    @htmx:after-swap.window="
+                                        const lostChecked = document.getElementById('filter-type-lost')?.checked;
+                                        $el.className = lostChecked
+                                            ? 'rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer bg-surface-container-lowest text-primary shadow-sm'
+                                            : 'rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer text-on-surface-variant hover:text-on-surface';
+                                    "
+                                >
+                                    Lost{% if type_counts %} <span class="ml-1 opacity-70">{{ type_counts.lost }}</span>{% endif %}
+                                </button>
+                                <button
+                                    type="button"
+                                    onclick="document.getElementById('filter-type-found').click()"
+                                    class="rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer {% if selected_type == 'found' %}bg-surface-container-lowest text-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}"
+                                    x-data
+                                    @htmx:after-swap.window="
+                                        const foundChecked = document.getElementById('filter-type-found')?.checked;
+                                        $el.className = foundChecked
+                                            ? 'rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer bg-surface-container-lowest text-primary shadow-sm'
+                                            : 'rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer text-on-surface-variant hover:text-on-surface';
+                                    "
+                                >
+                                    Found{% if type_counts %} <span class="ml-1 opacity-70">{{ type_counts.found }}</span>{% endif %}
+                                </button>
+                            </div>
 
-<p id="nearby-status"></p>
+                            <!-- Layout Switcher, Loading Indicator & Mobile Filter Trigger -->
+                            <div class="flex items-center justify-between gap-2 sm:justify-end">
+                                <div id="discovery-loading" class="htmx-indicator inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+                                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4z"></path>
+                                    </svg>
+                                    <span>Updating...</span>
+                                </div>
 
+                                <!-- Grid / List View Mode Switcher -->
+                                <div class="flex items-center rounded-lg bg-surface-container p-0.5" role="group" aria-label="Layout view">
+                                    <button
+                                        type="button"
+                                        @click="viewMode = 'grid'"
+                                        :class="viewMode === 'grid' ? 'bg-surface-container-lowest text-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'"
+                                        title="Grid View"
+                                        aria-label="Grid View"
+                                        class="rounded p-1.5 transition-colors cursor-pointer"
+                                    >
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <rect width="7" height="7" x="3" y="3" rx="1"/>
+                                            <rect width="7" height="7" x="14" y="3" rx="1"/>
+                                            <rect width="7" height="7" x="14" y="14" rx="1"/>
+                                            <rect width="7" height="7" x="3" y="14" rx="1"/>
+                                        </svg>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="viewMode = 'list'"
+                                        :class="viewMode === 'list' ? 'bg-surface-container-lowest text-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'"
+                                        title="Single Column View"
+                                        aria-label="Single Column View"
+                                        class="rounded p-1.5 transition-colors cursor-pointer"
+                                    >
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <line x1="8" x2="21" y1="6" y2="6"/>
+                                            <line x1="8" x2="21" y1="12" y2="12"/>
+                                            <line x1="8" x2="21" y1="18" y2="18"/>
+                                            <line x1="3" x2="3.01" y1="6" y2="6"/>
+                                            <line x1="3" x2="3.01" y1="12" y2="12"/>
+                                            <line x1="3" x2="3.01" y1="18" y2="18"/>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Mobile Filter Drawer Button -->
+                                <button
+                                    type="button"
+                                    @click="mobileFiltersOpen = true"
+                                    class="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary-container px-3 py-1.5 text-xs font-semibold text-on-primary lg:hidden"
+                                >
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                                    </svg>
+                                    <span>Filters</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HTMX Swapped Results Region (inherits hx-push-url="true" for pagination) -->
+                    <div id="report-results-region" hx-push-url="true" hx-indicator="#discovery-loading">
+                        {% include "reports/partials/_report_results.html" %}
+                    </div>
+                </div>
+            </div>
+        </section>
     </form>
+</div>
+{% endblock %}
 
-
-    {% include "reports/partials/_report_results.html" %}
-
-</section>
-
+{% block extra_js %}
+<script src="{% static 'js/nearby_reports.js' %}"></script>
 {% endblock %}

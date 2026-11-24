@@ -4,29 +4,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@2.0.0-alpha.1/dist/leaflet.css"  />
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script
-    src="https://unpkg.com/htmx.org@2.0.8"
-    defer>
-</script>
+    <meta name="description" content="LostHub — Lost something? Let's bring it home. Report and discover lost or found items in Nigerian campuses and neighbourhoods.">
+    <title>{% block title %}LostHub — Lost &amp; Found{% endblock %}</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..900;1,9..40,100..900&display=swap" rel="stylesheet">
 
-    <title>Document</title>
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+
+    {% block extra_head %}{% endblock %}
+
+    <script src="https://unpkg.com/htmx.org@2.0.8" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
-<body>
+<body
+    class="bg-surface text-on-surface antialiased"
+    x-data="{ htmxError: false }"
+    @htmx:send-error.window="htmxError = true"
+    @htmx:response-error.window="htmxError = true"
+    @htmx:after-request.window="if ($event.detail.successful) htmxError = false"
+>
+    <a
+        href="#main-content"
+        class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-on-primary"
+    >
+        Skip to main content
+    </a>
 
+    {% include "partials/_navbar.html" %}
 
-    <h1>Hello, World!</h1>
-    {% block content %}
-    
-    {% endblock %}
+    <!-- Network / Server Error Banner for HTMX Requests -->
+    <div x-show="htmxError" x-cloak class="app-container pt-4" role="alert">
+        <div class="alert alert-error justify-between">
+            <span>Could not load updates. Please check your connection and try again.</span>
+            <button
+                type="button"
+                @click="htmxError = false"
+                aria-label="Dismiss error"
+                class="-m-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-75 hover:opacity-100"
+            >
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M18 6 6 18"/>
+                    <path d="m6 6 12 12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
 
+    <main id="main-content" class="flex-1 bg-surface">
+        {% include "partials/_messages.html" %}
+        {% block content %}{% endblock %}
+    </main>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{% static 'js/location.js' %}"></script>
-    <script
-    src="{% static 'js/nearby_reports.js' %}"
-></script>
+    {% include "partials/_footer.html" %}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const revealEls = document.querySelectorAll(".reveal-on-scroll");
+            if (!revealEls.length) return;
+
+            if (!("IntersectionObserver" in window)) {
+                revealEls.forEach((el) => el.classList.add("is-revealed"));
+                return;
+            }
+
+            const observer = new IntersectionObserver(
+                (entries, obs) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add("is-revealed");
+                            obs.unobserve(entry.target);
+                        }
+                    });
+                },
+                { rootMargin: "0px 0px -40px 0px", threshold: 0.05 }
+            );
+
+            revealEls.forEach((el) => observer.observe(el));
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

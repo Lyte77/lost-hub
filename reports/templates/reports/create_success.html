@@ -1,44 +1,157 @@
 {% extends "base.html" %}
 
+{% block title %}Report Published — LostHub{% endblock %}
+
 {% block content %}
+<section class="py-8 sm:py-12">
+    <div class="app-container">
+        <div class="mx-auto max-w-xl space-y-5">
+            <!-- Confirmation Card -->
+            <div class="card p-6 sm:p-8">
+                <div class="flex items-start gap-3.5">
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <path d="m9 11 3 3L22 4"/>
+                        </svg>
+                    </span>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-tight text-navy sm:text-2xl">
+                            Report published
+                        </h1>
+                        <p class="mt-1 text-sm text-muted">
+                            Your report is now live and visible to the community.
+                        </p>
+                    </div>
+                </div>
 
-<h1>Report published</h1>
+                <!-- Report Summary -->
+                <div class="mt-6 rounded-xl border border-border bg-page p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <span class="badge {% if report.type == 'lost' %}badge-lost{% else %}badge-found{% endif %}">
+                            {{ report.get_type_display }}
+                        </span>
+                        <span class="text-xs font-medium text-muted">{{ report.category.name }}</span>
+                    </div>
+                    <h2 class="mt-2.5 text-base font-semibold text-ink">
+                        {{ report.title }}
+                    </h2>
+                    <div class="mt-2 space-y-1 text-xs text-muted">
+                        {% if report.location_name %}
+                            <p>{{ report.location_name }}</p>
+                        {% endif %}
+                        <p>{{ report.occurred_at|date:"j M Y, g:i A" }}</p>
+                    </div>
+                </div>
 
-<p>
-    Your report for
-    <strong>{{ report.title }}</strong>
-    has been published.
-</p>
+                <!-- Public View Action -->
+                <div class="mt-5 flex flex-col gap-2.5 sm:flex-row">
+                    <a href="{% url 'reports:detail' report.id %}" class="btn btn-navy flex-1">
+                        View public report
+                    </a>
+                    <a href="{% url 'reports:list' %}" class="btn btn-secondary flex-1">
+                        Browse all reports
+                    </a>
+                </div>
+            </div>
 
+            <!-- Private Management Link Card -->
+            <div class="card border-warning-border p-6 sm:p-8">
+                {% if management_url %}
+                    <div
+                        x-data="{
+                            copied: false,
+                            fullUrl: window.location.origin + '{{ management_url|escapejs }}',
+                            async copyLink() {
+                                try {
+                                    if (navigator.clipboard && window.isSecureContext) {
+                                        await navigator.clipboard.writeText(this.fullUrl);
+                                    } else {
+                                        const input = this.$refs.linkInput;
+                                        input.select();
+                                        input.setSelectionRange(0, 99999);
+                                        document.execCommand('copy');
+                                    }
+                                    this.copied = true;
+                                    setTimeout(() => { this.copied = false; }, 2500);
+                                } catch (e) {
+                                    this.$refs.linkInput.select();
+                                }
+                            }
+                        }"
+                    >
+                        <div class="flex items-start gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-warning">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2 class="text-base font-semibold text-navy">
+                                    Save your private management link
+                                </h2>
+                                <p class="mt-1 text-sm leading-relaxed text-muted">
+                                    Because LostHub does not require an account, this link is the only way to edit details, update the location, mark the item as recovered/returned, or remove your report.
+                                </p>
+                            </div>
+                        </div>
 
-{% if management_url %}
+                        <div class="mt-4 rounded-lg border border-warning-border bg-warning-soft px-3.5 py-2.5 text-xs font-medium text-warning">
+                            Keep this link private. Anyone with this link can manage or remove your report.
+                        </div>
 
-    <div>
-        <h2>Save your private management link</h2>
+                        <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+                            <label for="management-link-input" class="sr-only">Private management link</label>
+                            <input
+                                id="management-link-input"
 
-        <p>
-            You will need this link to edit, resolve,
-            or remove your report.
-        </p>
+                                x-ref="linkInput"
+                                type="text"
+                                :value="fullUrl"
+                                value="{{ management_url }}"
+                                readonly
+                                @click="$el.select()"
+                                class="form-input min-w-0 flex-1 bg-page font-mono text-xs text-ink"
+                            >
+                            <button
+                                type="button"
+                                @click="copyLink()"
+                                class="btn btn-primary shrink-0 sm:w-36"
+                            >
+                                <svg x-show="!copied" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                                </svg>
+                                <svg x-show="copied" x-cloak class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                <span x-text="copied ? 'Copied!' : 'Copy link'">Copy link</span>
+                            </button>
+                        </div>
 
-        <input
-            type="text"
-            value="{{ management_url }}"
-            readonly
-        >
+                        <div class="mt-4 border-t border-border pt-4">
+                            <a href="{{ management_url }}" class="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-navy hover:text-accent">
+                                <span>Open report management page</span>
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M5 12h14"/>
+                                    <path d="m12 5 7 7-7 7"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <h2 class="text-base font-semibold text-navy">Management link already issued</h2>
+                    <p class="mt-1.5 text-sm text-muted">
+                        This report was already created. Use the private management link you saved when publishing.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
     </div>
+</section>
+{% endblock %}
 
-{% else %}
-
-    <p>
-        This report was already created.
-        Use the management link you previously saved.
-    </p>
-
-{% endif %}
-
-<a href="{{ management_url }}">
-    Test management access
-</a>
-
+{% block extra_head %}
+<meta name="referrer" content="same-origin">
 {% endblock %}

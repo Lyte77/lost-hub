@@ -37,6 +37,19 @@ document.addEventListener("DOMContentLoaded", () => {
     let map = null;
     let marker = null;
 
+    if (
+        !currentLocationButton ||
+        !mapButton ||
+        !mapWrapper ||
+        !locationStatus ||
+        !latitudeInput ||
+        !longitudeInput ||
+        !accuracyInput ||
+        !locationNameInput ||
+        !locationSourceInput
+    ) {
+        return;
+    }
 
     /*
      * -----------------------------

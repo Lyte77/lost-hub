@@ -1,107 +1,537 @@
 {% extends "base.html" %}
 
+{% block title %}{{ report.title }} ({{ report.get_type_display }}) — LostHub{% endblock %}
+
 {% block content %}
+<article
+    class="relative w-full pb-24 lg:pb-12"
+    x-data="{
+        active: 0,
+        total: {{ report.images.all|length }},
+        lightboxOpen: false,
+        contactRevealed: false
+    }"
+    @htmx:after-swap.window="if ($event.detail.target && $event.detail.target.id === 'report-contact') contactRevealed = true"
+    @keydown.escape.window="lightboxOpen = false"
+>
+    <div class="app-container relative pt-6 pb-10 sm:pt-8">
+        <!-- Subtle Contained Ambient Glows -->
+        <div class="pointer-events-none absolute -top-12 right-12 -z-10 h-96 w-96 rounded-full bg-primary-container/10 blur-3xl"></div>
+        <div class="pointer-events-none absolute top-1/2 -left-20 -z-10 h-80 w-80 rounded-full bg-secondary-container/20 blur-3xl"></div>
 
-<article>
+        <!-- Breadcrumbs & Quick Return -->
+        <div class="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-1.5 text-xs text-on-surface-variant">
+                <a href="{% url 'reports:home' %}" class="inline-flex items-center gap-1 transition-colors hover:text-primary">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span>Home</span>
+                </a>
+                <span class="font-bold text-outline-variant">/</span>
+                <a href="{% url 'reports:list' %}" class="transition-colors hover:text-primary">
+                    Browse Reports
+                </a>
+                <span class="font-bold text-outline-variant">/</span>
+                <a href="{% url 'reports:list' %}?category={{ report.category.slug }}" class="transition-colors hover:text-primary">
+                    {{ report.category.name }}
+                </a>
+                <span class="font-bold text-outline-variant">/</span>
+                <span class="max-w-[200px] truncate font-semibold text-on-surface sm:max-w-xs">
+                    {{ report.title }}
+                </span>
+            </nav>
 
-    <a href="{% url 'reports:list' %}">
-        ← Back to reports
-    </a>
-
-
-    <header>
-
-        <span>
-            {{ report.get_type_display }}
-        </span>
-
-        <h1>
-            {{ report.title }}
-        </h1>
-
-        <p>
-            {{ report.category.name }}
-        </p>
-
-    </header>
-
-
-    {% if report.images.all %}
-
-        <div>
-            {% for image in report.images.all %}
-
-                <img
-                    src="{{ image.image.url }}"
-                    alt="{{ report.title }}"
-                >
-
-            {% endfor %}
+            <a
+                href="{% url 'reports:list' %}"
+                class="group inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-primary hover:underline sm:text-sm"
+            >
+                <svg class="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m12 19-7-7 7-7"/>
+                    <path d="M19 12H5"/>
+                </svg>
+                <span>Back to All Reports</span>
+            </a>
         </div>
 
-    {% endif %}
+        <!-- Main Two-Column Presentation Grid (5 cols media / 7 cols details) -->
+        <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8">
+            <!-- LEFT COLUMN: Visual Media & Guest Listing Snapshot (5 cols) -->
+            <div class="flex flex-col gap-4 lg:col-span-5">
+                {% with images=report.images.all %}
+                    {% if images %}
+                        <!-- Primary Photo Showcase Unit -->
+                        <div class="group relative w-full overflow-hidden rounded-xl bg-surface-container shadow-md">
+                            <!-- Top-Left Status & Category Overlay -->
+                            <div class="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1.5">
+                                <span class="badge shadow-sm backdrop-blur-md {% if report.type == 'lost' %}bg-amber-100/95 text-amber-900{% else %}bg-emerald-50/95 text-emerald-800{% endif %}">
+                                    {% if report.type == "lost" %}
+                                        LOST ITEM
+                                    {% else %}
+                                        FOUND ITEM
+                                    {% endif %}
+                                </span>
+                                <span class="inline-flex items-center rounded-full bg-inverse-surface/85 px-2.5 py-0.5 text-[11px] font-bold text-inverse-on-surface backdrop-blur-md">
+                                    {{ report.category.name }}
+                                </span>
+                            </div>
 
+                            <!-- Photo Counter Pill (Bottom-Left when multiple) -->
+                            {% if images|length > 1 %}
+                                <div class="absolute bottom-3 left-3 z-20 inline-flex items-center gap-1 rounded-lg bg-surface-container-lowest/90 px-2.5 py-1 text-[11px] font-bold text-on-surface shadow-sm backdrop-blur-sm">
+                                    <span x-text="(active + 1) + ' of ' + total + ' photos'"></span>
+                                </div>
+                            {% endif %}
 
-    <section>
+                            <!-- Zoom Lightbox Trigger -->
+                            <button
+                                type="button"
+                                @click="lightboxOpen = true"
+                                aria-label="Enlarge photo"
+                                class="absolute right-3 bottom-3 z-20 flex h-9 w-9 items-center justify-center rounded-lg bg-surface-container-lowest/85 text-on-surface shadow-sm backdrop-blur-sm transition-colors hover:bg-surface-container-lowest cursor-pointer"
+                            >
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <line x1="21" x2="16.65" y1="21" y2="16.65"/>
+                                    <line x1="11" x2="11" y1="8" y2="14"/>
+                                    <line x1="8" x2="14" y1="11" y2="11"/>
+                                </svg>
+                            </button>
 
-        <h2>
-            Description
-        </h2>
+                            <!-- Main Image Viewport -->
+                            <div class="aspect-4/3 w-full overflow-hidden bg-surface-container-high">
+                                {% for image in images %}
+                                    <img
+                                        x-show="active === {{ forloop.counter0 }}"
+                                        {% if not forloop.first %}x-cloak{% endif %}
+                                        @click="lightboxOpen = true"
+                                        src="{{ image.image.url }}"
+                                        alt="{{ report.title }} — photo {{ forloop.counter }}"
+                                        class="h-full w-full cursor-zoom-in object-cover transition-transform duration-300 group-hover:scale-105"
+                                    >
+                                {% endfor %}
+                            </div>
+                        </div>
 
-        <p>
-            {{ report.description }}
-        </p>
+                        <!-- Thumbnail Gallery Strip -->
+                        {% if images|length > 1 %}
+                            <div class="grid grid-cols-5 gap-2.5">
+                                {% for image in images %}
+                                    <button
+                                        type="button"
+                                        @click="active = {{ forloop.counter0 }}"
+                                        :class="active === {{ forloop.counter0 }} ? 'ring-2 ring-primary shadow-sm' : 'opacity-80 hover:opacity-100'"
+                                        aria-label="View photo {{ forloop.counter }}"
+                                        class="relative aspect-square overflow-hidden rounded-lg bg-surface-container-high transition-all focus:outline-none cursor-pointer"
+                                    >
+                                        <img
+                                            src="{{ image.image.url }}"
+                                            alt="{{ report.title }} thumbnail {{ forloop.counter }}"
+                                            loading="lazy"
+                                            class="h-full w-full object-cover"
+                                        >
+                                        <span
+                                            x-show="active === {{ forloop.counter0 }}"
+                                            class="pointer-events-none absolute inset-0 bg-primary/10"
+                                        ></span>
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <!-- Clean Fallback when no photos exist -->
+                        <div class="relative flex aspect-4/3 w-full flex-col items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-surface-container-low p-6 text-center shadow-sm">
+                            <div class="absolute top-3 left-3 flex flex-wrap items-center gap-1.5">
+                                <span class="badge {% if report.type == 'lost' %}badge-lost{% else %}badge-found{% endif %}">
+                                    {% if report.type == "lost" %}LOST ITEM{% else %}FOUND ITEM{% endif %}
+                                </span>
+                                <span class="inline-flex items-center rounded-full bg-inverse-surface/85 px-2.5 py-0.5 text-[11px] font-bold text-inverse-on-surface">
+                                    {{ report.category.name }}
+                                </span>
+                            </div>
 
-    </section>
+                            <span class="flex h-14 w-14 items-center justify-center rounded-xl bg-surface-container-high text-primary/70">
+                                {% include "reports/partials/_category_icon.html" with slug=report.category.slug icon_class="h-7 w-7" %}
+                            </span>
+                            <p class="text-sm font-medium text-on-surface-variant">
+                                No photos were attached to this report
+                            </p>
+                        </div>
+                    {% endif %}
+                {% endwith %}
 
+                <!-- Factual Guest Listing Snapshot (No fake user accounts/stats) -->
+                <div class="flex items-center justify-between gap-3 rounded-xl bg-surface-container-lowest p-4 shadow-sm">
+                    <div class="flex min-w-0 items-center gap-3">
+                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-container text-on-primary">
+                            <svg class="h-5 w-5 text-secondary-container" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                                <path d="m9 12 2 2 4-4"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-on-surface">
+                                Community Guest Report
+                            </p>
+                            <p class="truncate text-xs text-on-surface-variant">
+                                Posted {{ report.created_at|timesince }} ago &bull; Active listing
+                            </p>
+                        </div>
+                    </div>
 
-    <section>
+                    <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-secondary-container/40 px-2.5 py-1 text-[11px] font-bold text-on-secondary-container">
+                        {{ report.get_status_display }}
+                    </span>
+                </div>
+            </div>
 
-        <h2>
-            Location
-        </h2>
+            <!-- RIGHT COLUMN: Metadata, Attributes, Description, Contact & Handover (7 cols) -->
+            <div class="flex flex-col gap-5 lg:col-span-7">
+                <!-- Header & Top Metadata Strip -->
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-on-surface-variant">
+                        <span class="inline-flex items-center gap-1 text-primary">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                            Reported {{ report.created_at|timesince }} ago
+                        </span>
+                        <span aria-hidden="true">&bull;</span>
+                        <span class="inline-flex items-center gap-1">
+                            <svg class="h-4 w-4 text-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            {{ report.location_name|default:"Location not specified" }}
+                        </span>
+                        <span aria-hidden="true">&bull;</span>
+                        <span class="font-mono text-outline">Ref #{{ report.id|stringformat:"s"|slice:":8"|upper }}</span>
+                    </div>
 
-        <p>
-            📍 {{ report.location_name }}
-        </p>
+                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-on-surface sm:text-3xl">
+                        {{ report.title }}
+                    </h1>
+                </div>
 
-    </section>
+                <!-- 2x2 Distinct Attribute Grid (100% real model data) -->
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div class="flex flex-col gap-0.5 rounded-xl bg-surface-container-lowest p-4 shadow-sm">
+                        <span class="text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">Report Status</span>
+                        <span class="text-base font-semibold text-on-surface">{{ report.get_type_display }} Item</span>
+                    </div>
 
+                    <div class="flex flex-col gap-0.5 rounded-xl bg-surface-container-lowest p-4 shadow-sm">
+                        <span class="text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">Category</span>
+                        <span class="text-base font-semibold text-on-surface">{{ report.category.name }}</span>
+                    </div>
 
-    <section>
+                    <div class="flex flex-col gap-0.5 rounded-xl bg-surface-container-lowest p-4 shadow-sm">
+                        <span class="text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
+                            {% if report.type == "lost" %}Date &amp; Time Lost{% else %}Date &amp; Time Found{% endif %}
+                        </span>
+                        <time datetime="{{ report.occurred_at|date:'c' }}" class="text-sm font-semibold text-on-surface">
+                            {{ report.occurred_at|date:"j M Y, g:i A" }}
+                        </time>
+                    </div>
 
-        <h2>
-            Date / Time
-        </h2>
+                    <div class="flex flex-col gap-0.5 rounded-xl bg-surface-container-lowest p-4 shadow-sm">
+                        <span class="text-[11px] font-bold tracking-wider text-on-surface-variant uppercase">
+                            {% if report.type == "lost" %}Last Seen Area{% else %}Found Area{% endif %}
+                        </span>
+                        <span class="truncate text-sm font-semibold text-on-surface">
+                            {{ report.location_name|default:"Location not specified" }}
+                        </span>
+                    </div>
+                </div>
 
-        <p>
-            {{ report.occurred_at|date:"j M Y, g:i A" }}
-        </p>
+                <!-- Narrative Description Card -->
+                <section class="flex flex-col gap-3 rounded-xl bg-surface-container-lowest p-5 shadow-sm sm:p-6">
+                    <h2 class="flex items-center gap-1.5 text-xs font-bold tracking-wider text-on-surface uppercase">
+                        <svg class="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" x2="8" y1="13" y2="13"/>
+                            <line x1="16" x2="8" y1="17" y2="17"/>
+                        </svg>
+                        <span>
+                            {% if report.type == "lost" %}
+                                Owner Description &amp; Circumstances
+                            {% else %}
+                                Finder Description &amp; Circumstances
+                            {% endif %}
+                        </span>
+                    </h2>
 
-    </section>
+                    <div class="text-sm leading-relaxed text-on-surface sm:text-base">
+                        {{ report.description|linebreaksbr }}
+                    </div>
 
+                    <div class="mt-1 flex items-start gap-2.5 rounded-lg bg-surface-container-high/60 p-3.5 text-xs text-on-surface">
+                        <svg class="mt-0.5 h-5 w-5 shrink-0 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <p class="leading-relaxed">
+                            <strong class="font-semibold">Ownership Verification:</strong>
+                            {% if report.type == "found" %}
+                                Be ready to describe unique identifying marks, lock screens, contents, or serial details so the finder can confirm ownership.
+                            {% else %}
+                                If you found an item matching this description, reach out to confirm identifying details before arranging a handover.
+                            {% endif %}
+                        </p>
+                    </div>
+                </section>
 
-    <section>
+                <!-- PROMINENT ACTION CARD: Click-to-Reveal Contact (Phone hidden until HTMX click) -->
+                <section
+                    id="contact-section"
+                    class="relative flex flex-col gap-4 overflow-hidden rounded-xl bg-surface-container-lowest p-5 shadow-md sm:p-6"
+                >
+                    <div class="pointer-events-none absolute -right-8 -bottom-8 h-44 w-44 rounded-full bg-secondary-container/20 blur-2xl"></div>
 
-        <h2>
-            Contact
-        </h2>
+                    <div class="relative z-10 flex items-start justify-between gap-3">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[11px] font-bold tracking-wider text-secondary uppercase">
+                                Claim &amp; Recovery
+                            </span>
+                            <h2 class="text-xl font-bold text-on-surface sm:text-2xl">
+                                {% if report.type == "found" %}
+                                    Recognize this item?
+                                {% else %}
+                                    Did you find this item?
+                                {% endif %}
+                            </h2>
+                        </div>
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container/50 text-on-secondary-container">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                            </svg>
+                        </span>
+                    </div>
 
-        <div id="report-contact">
+                    <div id="report-contact" class="relative z-10 space-y-4">
+                        <p class="text-sm leading-relaxed text-on-surface-variant">
+                            To protect reporter privacy, the phone number and WhatsApp link stay hidden until you choose to reveal them.
+                        </p>
 
-    <button
-        type="button"
-        hx-get="{% url 'reports:contact' report.id %}"
-        hx-target="#report-contact"
-        hx-swap="outerHTML"
+                        <button
+                            type="button"
+                            id="reveal-contact-btn"
+                            hx-get="{% url 'reports:contact' report.id %}"
+                            hx-target="#report-contact"
+                            hx-swap="outerHTML"
+                            hx-indicator="#contact-loading"
+                            class="btn btn-primary w-full py-3"
+                        >
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                            </svg>
+                            <span>Contact Reporter</span>
+                        </button>
+
+                        <div id="contact-loading" class="htmx-indicator flex items-center justify-center gap-2 text-xs font-semibold text-primary">
+                            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4z"></path>
+                            </svg>
+                            <span>Revealing contact options...</span>
+                        </div>
+                    </div>
+
+                    <div class="relative z-10 flex flex-wrap items-center gap-2 border-t border-surface-container pt-3 text-xs text-on-surface-variant">
+                        <span class="inline-flex items-center gap-1 font-semibold text-secondary">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                                <path d="m9 12 2 2 4-4"/>
+                            </svg>
+                            Safe Community Handover
+                        </span>
+                        <span aria-hidden="true">&bull;</span>
+                        <span>Never pay release fees or share sensitive bank details</span>
+                    </div>
+                </section>
+
+                <!-- Location & Safe Handover Zone Card (No coordinates exposed) -->
+                <section class="flex flex-col gap-4 rounded-xl bg-surface-container-lowest p-5 shadow-sm sm:p-6">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <svg class="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            <h2 class="text-base font-bold text-on-surface sm:text-lg">
+                                Area &amp; Safe Handover Guidance
+                            </h2>
+                        </div>
+                        <span class="rounded bg-surface-container-high px-2.5 py-0.5 text-[11px] font-bold text-on-surface">
+                            General Area Only
+                        </span>
+                    </div>
+
+                    <div class="flex flex-col items-center justify-center gap-2 rounded-xl bg-surface-container-low p-6 text-center">
+                        <span class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-lowest text-primary shadow-sm">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                        </span>
+                        <p class="rounded-full bg-surface-container-lowest px-4 py-1 text-sm font-bold text-on-surface shadow-xs">
+                            {{ report.location_name|default:"Location not specified" }}
+                        </p>
+                        {% if report.location_name %}
+                            <a
+                                href="{% url 'reports:list' %}?q={{ report.location_name|urlencode }}"
+                                class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-secondary hover:text-primary hover:underline"
+                            >
+                                <span>Search other reports in this area</span>
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M5 12h14"/>
+                                    <path d="m12 5 7 7-7 7"/>
+                                </svg>
+                            </a>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex items-start gap-2.5 rounded-lg bg-surface-container-low p-3.5 text-xs text-on-surface">
+                        <svg class="mt-0.5 h-5 w-5 shrink-0 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                        </svg>
+                        <p class="leading-relaxed">
+                            <strong class="font-semibold text-on-surface">Recommended Handover Practice:</strong>
+                            Meet during daylight hours in a well-lit public location such as a campus security post, library reception, or busy public gatehouse. Exact coordinates are kept private.
+                        </p>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- RELATED / NEARBY REPORTS STRIP (Real DB records only) -->
+        {% if related_reports %}
+            <section class="mt-12 flex flex-col gap-6 border-t border-surface-container pt-10">
+                <div class="flex items-end justify-between gap-4">
+                    <div>
+                        <span class="text-[11px] font-bold tracking-wider text-primary uppercase">
+                            Related Listings
+                        </span>
+                        <h2 class="mt-0.5 text-xl font-bold tracking-tight text-on-surface sm:text-2xl">
+                            Other active reports you may want to check
+                        </h2>
+                    </div>
+
+                    <a
+                        href="{% url 'reports:list' %}?category={{ report.category.slug }}"
+                        class="hidden items-center gap-1 text-xs font-bold text-primary hover:underline sm:inline-flex"
+                    >
+                        <span>View more in {{ report.category.name }}</span>
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {% for related in related_reports %}
+                        {% include "reports/partials/_report_card.html" with report=related %}
+                    {% endfor %}
+                </div>
+
+                <div class="sm:hidden">
+                    <a
+                        href="{% url 'reports:list' %}?category={{ report.category.slug }}"
+                        class="btn btn-secondary w-full"
+                    >
+                        <span>View more in {{ report.category.name }}</span>
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M5 12h14"/>
+                            <path d="m12 5 7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            </section>
+        {% endif %}
+    </div>
+
+    <!-- Image Zoom Lightbox Modal -->
+    {% with images=report.images.all %}
+        {% if images %}
+            <div
+                x-show="lightboxOpen"
+                x-cloak
+                class="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/85 p-4 backdrop-blur-xs"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Enlarged item photo"
+                @click.self="lightboxOpen = false"
+            >
+                <button
+                    type="button"
+                    @click="lightboxOpen = false"
+                    aria-label="Close photo preview"
+                    class="fixed top-4 right-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface shadow-lg hover:bg-surface-container cursor-pointer"
+                >
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 6 6 18"/>
+                        <path d="m6 6 12 12"/>
+                    </svg>
+                </button>
+
+                <div class="relative flex max-h-[85vh] max-w-4xl items-center justify-center">
+                    {% for image in images %}
+                        <img
+                            x-show="active === {{ forloop.counter0 }}"
+                            src="{{ image.image.url }}"
+                            alt="{{ report.title }} — full view {{ forloop.counter }}"
+                            class="max-h-[85vh] w-auto rounded-xl object-contain shadow-2xl"
+                        >
+                    {% endfor %}
+
+                    {% if images|length > 1 %}
+                        <button
+                            type="button"
+                            @click="active = (active - 1 + total) % total"
+                            aria-label="Previous photo"
+                            class="absolute left-2 inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-lowest/90 text-on-surface shadow-md hover:bg-surface-container-lowest cursor-pointer"
+                        >
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="m15 18-6-6 6-6"/>
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            @click="active = (active + 1) % total"
+                            aria-label="Next photo"
+                            class="absolute right-2 inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-lowest/90 text-on-surface shadow-md hover:bg-surface-container-lowest cursor-pointer"
+                        >
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Mobile Sticky Bottom Contact Bar (hides once revealed) -->
+    <div
+        x-show="!contactRevealed"
+        class="fixed inset-x-0 bottom-0 z-30 border-t border-surface-container bg-surface/95 px-4 py-3 shadow-lg backdrop-blur-md lg:hidden"
     >
-        Contact Reporter
-    </button>
-
-</div>
-
-    </section>
-
+        <button
+            type="button"
+            @click="
+                document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                document.getElementById('reveal-contact-btn')?.click();
+            "
+            class="btn btn-primary w-full"
+        >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span>Contact Reporter</span>
+        </button>
+    </div>
 </article>
-
 {% endblock %}

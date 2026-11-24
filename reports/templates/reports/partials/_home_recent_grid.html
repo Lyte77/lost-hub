@@ -1,0 +1,29 @@
+<div id="home-recent-grid" class="mt-8">
+    {% if recent_reports %}
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {% for report in recent_reports %}
+                {% include "reports/partials/_report_card.html" with report=report %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card px-6 py-12 text-center">
+            <h3 class="text-base font-semibold text-on-surface">
+                {% if active_recent_type == "lost" %}
+                    No active lost item reports right now
+                {% elif active_recent_type == "found" %}
+                    No active found item reports right now
+                {% else %}
+                    No active reports yet
+                {% endif %}
+            </h3>
+            <p class="mt-1 text-sm text-on-surface-variant">
+                Be the first to report a lost or found item in your community.
+            </p>
+            <div class="mt-5">
+                <a href="{% url 'reports:create' %}" class="btn btn-primary">
+                    Report an Item
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>

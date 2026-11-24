@@ -33,7 +33,12 @@ urlpatterns = [
     ),
 
     path(
-        "",
+        "home/",
+        views.home,
+        name="home",
+    ),
+    path(
+        "list/",
         views.report_list,
         name="list",
     ),

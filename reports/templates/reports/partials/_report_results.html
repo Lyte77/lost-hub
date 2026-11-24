@@ -1,114 +1,270 @@
-<div id="report-results">
+<div id="report-results" class="flex flex-col gap-4">
+    <!-- Active Filter Removable Chips (only when filters are active) -->
+    {% if selected_type or selected_category or search_query or nearby %}
+        <div class="flex flex-wrap items-center gap-2 rounded-xl bg-surface-container-lowest px-4 py-3 shadow-xs">
+            <span class="text-xs font-semibold text-outline">Active Filters:</span>
 
-    {% for report in page_obj %}
-
-        <article>
-
-            {% with image=report.images.first %}
-                {% if image %}
-                    <img
-                        src="{{ image.image.url }}"
-                        alt="{{ report.title }}"
+            {% if selected_type %}
+                <span class="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2.5 py-1 text-xs font-semibold text-on-secondary-fixed-variant">
+                    <span>Type: <strong>{{ selected_type|title }}</strong></span>
+                    <button
+                        type="button"
+                        data-clear-filter="type"
+                        aria-label="Remove type filter"
+                        class="rounded-full p-0.5 transition-colors hover:text-error cursor-pointer"
                     >
-                {% endif %}
-            {% endwith %}
-
-            <span>
-                {{ report.get_type_display }}
-            </span>
-
-            <h2>
-                <a href="{% url 'reports:detail' report.id %}">
-                    {{ report.title }}
-                </a>
-            </h2>
-
-            <p>
-                {{ report.category.name }}
-            </p>
-
-            {% if report.location_name %}
-                <p>
-                    📍 {{ report.location_name }}
-                </p>
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M18 6 6 18"/>
+                            <path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                </span>
             {% endif %}
 
-            {% if report.distance %}
-                <p>
-                    📍 {{ report.distance.km|floatformat:1 }} km away
-                </p>
-
+            {% if selected_category %}
+                <span class="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2.5 py-1 text-xs font-semibold text-on-secondary-fixed-variant">
+                    <span>
+                        Category:
+                        <strong>
+                            {% for cat in categories %}
+                                {% if cat.slug == selected_category %}{{ cat.name }}{% endif %}
+                            {% endfor %}
+                        </strong>
+                    </span>
+                    <button
+                        type="button"
+                        data-clear-filter="category"
+                        aria-label="Remove category filter"
+                        class="rounded-full p-0.5 transition-colors hover:text-error cursor-pointer"
+                    >
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M18 6 6 18"/>
+                            <path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                </span>
             {% endif %}
 
-            <p>
-                {{ report.occurred_at|date:"j M Y, g:i A" }}
-            </p>
+            {% if search_query %}
+                <span class="inline-flex items-center gap-1 rounded-full bg-surface-container px-2.5 py-1 text-xs font-semibold text-on-surface-variant">
+                    <span>Query: <strong>"{{ search_query }}"</strong></span>
+                    <button
+                        type="button"
+                        data-clear-filter="q"
+                        aria-label="Remove search query"
+                        class="rounded-full p-0.5 transition-colors hover:text-error cursor-pointer"
+                    >
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M18 6 6 18"/>
+                            <path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                </span>
+            {% endif %}
 
-        </article>
-
-    {% empty %}
-
-    <div>
-        {% if search_query %}
-
-            <h3>No reports found</h3>
-
-            <p>
-                We couldn't find anything matching
-                "{{ search_query }}".
-            </p>
-
-        {% else %}
-
-            <h3>No reports yet</h3>
-
-            <p>
-                No reports match these filters.
-            </p>
-
-        {% endif %}
-    </div>
-
-{% endfor %}
-
-
-    {% if page_obj.has_other_pages %}
-
-        <nav>
-
-           {% if page_obj.has_previous %}
-
-    <button
-        hx-get="?page={{ page_obj.previous_page_number }}&q={{ search_query|urlencode }}&type={{ selected_type|default:'' }}&category={{ selected_category|default:'' }}"
-        hx-target="#report-results"
-        hx-swap="outerHTML"
-    >
-        Previous
-    </button>
-
-{% endif %}
-
-
-            <span>
-                Page {{ page_obj.number }}
-                of {{ page_obj.paginator.num_pages }}
-            </span>
-
-
-            {% if page_obj.has_next %}
+            {% if nearby %}
+                <span class="inline-flex items-center gap-1 rounded-full bg-primary-fixed/60 px-2.5 py-1 text-xs font-semibold text-primary">
+                    <span>Within <strong>{{ radius_km|floatformat:0 }} km</strong></span>
+                    <button
+                        type="button"
+                        data-clear-filter="nearby"
+                        aria-label="Remove nearby filter"
+                        class="rounded-full p-0.5 transition-colors hover:text-error cursor-pointer"
+                    >
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M18 6 6 18"/>
+                            <path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                </span>
+            {% endif %}
 
             <button
-                hx-get="?page={{ page_obj.next_page_number }}&q={{ search_query|urlencode }}&type={{ selected_type|default:'' }}&category={{ selected_category|default:'' }}"
-                hx-target="#report-results"
-                hx-swap="outerHTML"
+                type="button"
+                data-clear-filter="all"
+                class="ml-1 text-xs font-semibold text-secondary hover:underline cursor-pointer"
             >
-                Next
+                Clear All
             </button>
-
-            {% endif %}
-
-        </nav>
-
+        </div>
     {% endif %}
 
+    <!-- Result Stats & Sort Mode Indicator -->
+    <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+        <p class="text-sm text-on-surface-variant">
+            {% if page_obj.paginator.count %}
+                Showing
+                <span class="font-bold text-on-surface">{{ page_obj.start_index }}–{{ page_obj.end_index }}</span>
+                of
+                <span class="font-bold text-on-surface">{{ page_obj.paginator.count }}</span>
+                reported item{{ page_obj.paginator.count|pluralize }}
+            {% else %}
+                <span class="font-bold text-on-surface">0</span> matching reports found
+            {% endif %}
+        </p>
+
+        <div class="inline-flex items-center gap-1.5 text-xs font-medium text-outline">
+            <svg class="h-3.5 w-3.5 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m3 16 4 4 4-4"/>
+                <path d="M7 20V4"/>
+                <path d="m21 8-4-4-4 4"/>
+                <path d="M17 4v16"/>
+            </svg>
+            <span>
+                {% if nearby %}Sorted by distance{% else %}Newest reports first{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Results Grid (Supports Alpine Grid / List viewMode when wrapped in discovery page) -->
+    {% if page_obj.object_list %}
+        <div
+            :class="typeof viewMode !== 'undefined' && viewMode === 'list' ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3'"
+            class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
+        >
+            {% for report in page_obj %}
+                {% include "reports/partials/_report_card.html" with report=report %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State Callout -->
+        <div class="flex flex-col items-center justify-between gap-4 rounded-2xl bg-surface-container-low p-6 shadow-sm md:flex-row">
+            <div class="flex items-start gap-4">
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary-container/40 text-on-secondary-container">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.3-4.3"/>
+                    </svg>
+                </div>
+                <div>
+                    {% if nearby %}
+                        <h3 class="text-base font-bold text-on-surface">No nearby reports within {{ radius_km|floatformat:0 }} km</h3>
+                        <p class="mt-0.5 max-w-xl text-sm text-on-surface-variant">
+                            Try widening your nearby search radius or clearing filters to browse all active community listings.
+                        </p>
+                    {% elif search_query %}
+                        <h3 class="text-base font-bold text-on-surface">No exact match for "{{ search_query }}" yet</h3>
+                        <p class="mt-0.5 max-w-xl text-sm text-on-surface-variant">
+                            Community members post new lost and found reports continuously. Post a report so anyone who found or lost it can contact you.
+                        </p>
+                    {% else %}
+                        <h3 class="text-base font-bold text-on-surface">No matching reports right now</h3>
+                        <p class="mt-0.5 max-w-xl text-sm text-on-surface-variant">
+                            Try adjusting your filters or post a new report for the community.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex w-full shrink-0 items-center gap-2.5 md:w-auto">
+                {% if selected_type or selected_category or search_query or nearby %}
+                    <a
+                        href="{% url 'reports:list' %}"
+                        class="btn btn-secondary flex-1 md:flex-none"
+                    >
+                        Reset Filters
+                    </a>
+                {% endif %}
+                <a
+                    href="{% url 'reports:create' %}"
+                    class="btn btn-primary flex-1 md:flex-none"
+                >
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M8 12h8"/>
+                        <path d="M12 8v8"/>
+                    </svg>
+                    <span>Post Report</span>
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Clean Numbered Pagination Bar -->
+    {% if page_obj.has_other_pages %}
+        <div class="mt-4 flex flex-col items-center justify-between gap-4 border-t border-surface-container py-4 sm:flex-row">
+            <p class="order-2 text-xs text-on-surface-variant sm:order-1">
+                Showing <span class="font-semibold text-on-surface">{{ page_obj.start_index }}–{{ page_obj.end_index }}</span>
+                of <span class="font-semibold text-on-surface">{{ page_obj.paginator.count }}</span> items
+            </p>
+
+            <nav aria-label="Pagination" class="order-1 flex flex-wrap items-center gap-1 sm:order-2">
+                {% if page_obj.has_previous %}
+                    <button
+                        type="button"
+                        class="inline-flex min-h-9 items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-surface-container cursor-pointer"
+                        hx-get="{% url 'reports:list' %}?page={{ page_obj.previous_page_number }}&q={{ search_query|urlencode }}&type={{ selected_type|default:''|urlencode }}&category={{ selected_category|default:''|urlencode }}{% if nearby and latitude is not None and longitude is not None %}&nearby=1&lat={{ latitude }}&lon={{ longitude }}&radius={{ radius_km|floatformat:0 }}{% endif %}"
+                        hx-target="#report-results"
+                        hx-swap="outerHTML show:top"
+                    >
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m15 18-6-6 6-6"/>
+                        </svg>
+                        <span>Previous</span>
+                    </button>
+                {% else %}
+                    <button
+                        type="button"
+                        disabled
+                        class="inline-flex min-h-9 cursor-not-allowed items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-outline opacity-60"
+                    >
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m15 18-6-6 6-6"/>
+                        </svg>
+                        <span>Previous</span>
+                    </button>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if num == page_obj.number %}
+                        <button
+                            type="button"
+                            aria-current="page"
+                            class="h-9 w-9 rounded-lg bg-primary text-xs font-bold text-on-primary shadow-xs"
+                        >
+                            {{ num }}
+                        </button>
+                    {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:"-1" and num <= page_obj.number|add:"1" %}
+                        <button
+                            type="button"
+                            class="h-9 w-9 rounded-lg text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer"
+                            hx-get="{% url 'reports:list' %}?page={{ num }}&q={{ search_query|urlencode }}&type={{ selected_type|default:''|urlencode }}&category={{ selected_category|default:''|urlencode }}{% if nearby and latitude is not None and longitude is not None %}&nearby=1&lat={{ latitude }}&lon={{ longitude }}&radius={{ radius_km|floatformat:0 }}{% endif %}"
+                            hx-target="#report-results"
+                            hx-swap="outerHTML show:top"
+                        >
+                            {{ num }}
+                        </button>
+                    {% elif num == page_obj.number|add:"-2" or num == page_obj.number|add:"2" %}
+                        <span class="px-1.5 text-xs text-outline">&hellip;</span>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <button
+                        type="button"
+                        class="inline-flex min-h-9 items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-surface-container cursor-pointer"
+                        hx-get="{% url 'reports:list' %}?page={{ page_obj.next_page_number }}&q={{ search_query|urlencode }}&type={{ selected_type|default:''|urlencode }}&category={{ selected_category|default:''|urlencode }}{% if nearby and latitude is not None and longitude is not None %}&nearby=1&lat={{ latitude }}&lon={{ longitude }}&radius={{ radius_km|floatformat:0 }}{% endif %}"
+                        hx-target="#report-results"
+                        hx-swap="outerHTML show:top"
+                    >
+                        <span>Next</span>
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </button>
+                {% else %}
+                    <button
+                        type="button"
+                        disabled
+                        class="inline-flex min-h-9 cursor-not-allowed items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-outline opacity-60"
+                    >
+                        <span>Next</span>
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </button>
+                {% endif %}
+            </nav>
+        </div>
+    {% endif %}
 </div>
